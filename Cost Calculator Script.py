@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import os
 
-
 # Classes
 
 class ingr():
@@ -21,7 +20,7 @@ class recipe():
         self.rec_dict = rec_dict_constructor(df)
         self.cost = rec_cost(self)
         self.makes = makes_list
-        self.breakdown = [[k.name, self.rec_dict[k], eval(k.name).unit] for k in self.__dict__['rec_dict']]
+        self.breakdown = [[k.name, self.rec_dict[k], ingr_dict[k.name].unit] for k in self.__dict__['rec_dict']]
         
 class item():
     
@@ -38,7 +37,7 @@ class item():
               '\nPrice: $' + str(self.price))
 
 
-# Dictionaries and Functions
+# Dictionaries
 
 count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross':1/144}
 
@@ -48,6 +47,8 @@ vol_dict = {'c':1, 'cup':1, 'ml':236.5882365, 'oz':8, 'floz':8, 'tbsp':16, 'tsp'
 
 dict_list = [count_dict, weight_dict, vol_dict]
 
+
+# Functions
 
 def rec_cost(recipe):
     
@@ -124,7 +125,7 @@ def ingr_dict_constructor(ingr_df):
 
                     converted_unit = cost_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[1]
         
-                    ingr_dict[df['name'][k].replace(' ', '_')] = ingr(df['name'][k], converted_cost, converted_unit) 
+                    ingr_dict[df['name'][k]] = ingr(df['name'][k], converted_cost, converted_unit) 
                 
                 else:
                     pass
@@ -159,7 +160,7 @@ def recipe_converter(df):
     return dfc
 
 
-def rec_dict_constructor(df, ingr_dict):
+def rec_dict_constructor(df):
 
     rec_dict = {}
 
@@ -184,3 +185,4 @@ def item_price(item, scale_factor=3):
     item_price = scale_factor * item.cost
     
     return item_price
+
