@@ -7,18 +7,19 @@ import os
 
 class ingr():
     
-    def __init__(self, name, unit_cost, unit):
+    def __init__(self, name, cost, unit):
         self.name = name
-        self.unit_cost = unit_cost
+        self.cost = cost
         self.unit = unit
     
 class recipe():
     
-    def __init__(self, name, ingr_dict, makes_list):
+    def __init__(self, name, df, makes_list):
         self.name = name
-        self.ingr_dict = ingr_dict
-        self.cost = cost(self)
+        self.ingr_dict = rec_ingr_dict_constructor(df)
+        self.cost = rec_cost(self)
         self.makes = makes_list
+        self.breakdown = [(k.name, eval(k.name).cost, eval(k.name).unit) for k in self.__dict__['ingr_dict']]
         
 class sale_item():
     
@@ -28,52 +29,34 @@ class sale_item():
         self.unit = unit
         self.recipe = rec
         self.cost = sale_item_cost(self)
-        self.price = sale_item_price(self)
+        self.price = round(sale_item_price(self), 2)
+        
+    def specs(self):
+        print('Name:' , self.name, '\nPortion:', self.qty, self.unit, '\nCost: $' + str(round(self.cost, 2)),
+              '\nPrice: $' + str(self.price))
 
 
 
-count_dict = {'ea':1, 'dozen':12, 'score':20, 'gross':144}
+count_dict = {'ea':1, 'dozen':1/12, 'score':1/20, 'gross':1/144}
 
-weight_dict = {'g':1, 'lb':453.592, 'oz':28.3495}
+weight_dict = {'g':1, 'lb':1/453.592, 'oz':1/28.3495}
 
-vol_dict = {'c':1, 'ml':1/236.5882365, 'floz':1/8, 'tbsp':1/16, 'tsp':1/48, 'gal':16, 'qt':4, 'pt':2}
+vol_dict = {'c':1, 'ml':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 'qt':1/4, 'pt':1/2}
 
 dict_list = [count_dict, weight_dict, vol_dict]
 
 
-def cost(recipe):
+def rec_cost(recipe):
     
-    cost = 0
+    rec_cost = 0
     
     for ingr in recipe.ingr_dict:
         
-        cost += recipe.ingr_dict[ingr] * ingr.unit_cost
+        rec_cost += recipe.ingr_dict[ingr] * ingr.cost
         
-    cost = round(cost, 2)
+    #cost = round(cost, 2)
     
-    return cost
-
-
-def default_converter(qty, unit):
-    
-    converted_qty, converted_unit = 0, 0
-    
-    if any(unit in d for d in dict_list): 
-        
-        for d in dict_list:
-            
-            if unit in d:
-                converted_qty = qty * d[unit] 
-                converted_unit = {v:k for k,v in d.items()}[1]
-                break
-            else:
-                pass
-        
-    else:
-        print(unit)
-        print('WRONG!')
-    
-    return converted_qty, converted_unit
+    return rec_cost
 
 
 def unit_converter(qty, unit, target_unit):
@@ -97,13 +80,34 @@ def unit_converter(qty, unit, target_unit):
     return converted_qty, target_unit
 
 
+def cost_converter(cost, per_unit, target_unit):
+    
+    converted_cost = 0
+    
+    if any(per_unit and target_unit in d for d in dict_list): 
+        
+        for d in dict_list:
+            
+            if per_unit in d:
+                converted_cost = ( d[per_unit] / d[target_unit] ) * cost
+                break
+            else:
+                pass
+        
+    else:
+        print(unit)
+        print('WRONG!')
+    
+    return converted_cost, target_unit
+
+
 def ingr_list_constructor(df):
     
     ingr_list = []
     
     for k in range(df.shape[0]):
         
-        ingr_list.append(ingr(df['name'], default_converter(df['unit_cost'])[0], default_converter(df['unit_cost'])[1]))
+        ingr_list.append(ingr(df['name'], default_converter(df['cost'])[0], default_converter(df['cost'])[1]))
         
 
 def recipe_converter(df):
@@ -112,21 +116,32 @@ def recipe_converter(df):
     
     for k in range(df.shape[0]):
         
-        dfc['qty'][k], dfc['unit'][k] = default_converter(df['qty'][k], df['unit'][k])
+        if any(dfc['unit'][k] in d for d in dict_list):
+            
+            for d in dict_list:
+                
+                if dfc['unit'][k] in d:
+                    
+                    dfc['qty'][k], dfc['unit'][k] = unit_converter(dfc['qty'][k], dfc['unit'][k],
+                                                                    {v:k for k,v in d.items()}[1])  
+                else:
+                    pass
+        
+        else:
+            print('WRONG!')
             
     return dfc
 
 
-def recipe_constructor(name, df, makes_list):
+def rec_ingr_dict_constructor(df):
 
     ingr_dict = {}
 
-    for k in range(df['ingr'].shape[0]):
+    for k in range(df.shape[0]):
         ingr_dict[eval(df['ingr'][k])] = df['qty'][k]
-
-    rec = recipe(name, ingr_dict, makes_list)
     
-    return rec
+    return ingr_dict
+
         
 def sale_item_cost(sale_item):
     
