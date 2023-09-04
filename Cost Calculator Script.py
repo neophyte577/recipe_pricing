@@ -7,7 +7,6 @@ import os
 
 # Classes
 
-
 class ingr():
     
     def __init__(self, name, cost, unit):
@@ -37,8 +36,6 @@ class item():
     def specs(self):
         print('Name:' , self.name, '\nPortion:', self.qty, self.unit, '\nCost: $' + str(round(self.cost, 2)),
               '\nPrice: $' + str(self.price))
-
-
 
 
 # Dictionaries and Functions
@@ -162,7 +159,7 @@ def recipe_converter(df):
     return dfc
 
 
-def rec_dict_constructor(df):
+def rec_dict_constructor(df, ingr_dict):
 
     rec_dict = {}
 
