@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import os
 
+# Classes
+
 
 class ingr():
     
@@ -19,7 +21,7 @@ class recipe():
         self.ingr_dict = rec_ingr_dict_constructor(df)
         self.cost = rec_cost(self)
         self.makes = makes_list
-        self.breakdown = [(k.name, eval(k.name).cost, eval(k.name).unit) for k in self.__dict__['ingr_dict']]
+        self.breakdown = [[k.name, self.ingr_dict[k], eval(k.name).unit] for k in self.__dict__['ingr_dict']]
         
 class sale_item():
     
@@ -36,6 +38,8 @@ class sale_item():
               '\nPrice: $' + str(self.price))
 
 
+
+# Dictionaries and Functions
 
 count_dict = {'ea':1, 'dozen':1/12, 'score':1/20, 'gross':1/144}
 
@@ -106,9 +110,27 @@ def ingr_list_constructor(df):
     ingr_list = []
     
     for k in range(df.shape[0]):
+
+        if any(df['unit'][k] in d for d in dict_list):
+
+            for d in dict_list:
+
+                if df['unit'][k] in d:
+
+                    converted_cost = cost_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[0]
+
+                    converted_unit = cost_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[1]
         
-        ingr_list.append(ingr(df['name'], default_converter(df['cost'])[0], default_converter(df['cost'])[1]))
-        
+                    ingr_list.append( ingr(df['name'][k], converted_cost, converted_unit) )
+                
+                else:
+                    pass
+                                  
+        else:
+            print(df['unit'][k])
+            print('WRONG!')
+
+    return ingr_list
 
 def recipe_converter(df):
     
