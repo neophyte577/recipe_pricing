@@ -3,6 +3,7 @@ simplefilter(action='ignore', category=Warning)
 import numpy as np
 import pandas as pd
 
+
 # Classes
 
 class ingr():
@@ -14,29 +15,46 @@ class ingr():
     
 class recipe():
     
-    def __init__(self, name, rec_df, makes_list):
+    def __init__(self, name, rec_df, makes_dict):
         self.name = name
-        self.qty_dict = qty_dict_constructor(rec_df)
+        self.qty_dict = qty_dict_constructor(recipe_converter(rec_df))
         self.cost = rec_cost(self)
-        self.makes = makes_list
-        self.breakdown = [[k.name, self.qty_dict[k], ingr_dict[k.name].unit] for k in self.__dict__['qty_dict']]
+        self.makes = makes_dict
+        self.breakdown = [{k.name:[self.qty_dict[k], ingr_dict[k.name].unit]} for k in self.__dict__['qty_dict']]
         
 class item():
     
-    def __init__(self, name, qty, unit, rec):
+    def __init__(self, name, sizes_list, rec):
         self.name = name
-        self.qty = qty
-        self.unit = unit
+        self.sizes = sizes_list
         self.recipe = rec
-        self.cost = item_cost(self)
-        self.price = round(item_price(self), 2)
         
     def specs(self):
         print('Name:' , self.name, '\nPortion:', self.qty, self.unit, '\nCost: $' + str(round(self.cost, 2)),
               '\nPrice: $' + str(self.price))
+        
+    def cost(self, size):
+        
+        if size in (item_sizes and self.sizes):
+            
+            item_cost = self.recipe.cost / self.recipe.makes[size]
+    
+            return item_cost
+            
+        else:
+            print(size)
+            print('WRONG!')      
+            
+    def price(self, size, scale_factor=3):
+        
+        if size in (item_sizes and self.sizes):
+    
+            item_price = round(scale_factor * self.cost(size), 2)
+    
+        return item_price
 
 
-# Dictionaries
+# Lists and Dictionaries
 
 count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross':1/144}
 
@@ -45,6 +63,8 @@ weight_dict = {'g':1, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/2
 vol_dict = {'c':1, 'cup':1, 'ml':236.5882365, 'oz':8, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 'qt':1/4, 'pt':1/2}
 
 dict_list = [count_dict, weight_dict, vol_dict]
+
+item_sizes = ['portion', 'whole', 'full pan', 'half pan', 'quarter pan']
 
 ingr_list, ingr_dict = [], {}
 
@@ -146,13 +166,13 @@ def recipe_converter(rec_df):
     
     for k in range(df.shape[0]):
         
-        if any(dfc['unit'][k] in d for d in dict_list):
+        if any(df['unit'][k] in d for d in dict_list):
             
             for d in dict_list:
                 
-                if dfc['unit'][k] in d:
+                if df['unit'][k] in d:
                     
-                    dfc['qty'][k], dfc['unit'][k] = unit_converter(dfc['qty'][k], dfc['unit'][k],
+                    df['qty'][k], df['unit'][k] = unit_converter(df['qty'][k], df['unit'][k],
                                                                     {v:k for k,v in d.items()}[1])  
                 else:
                     pass
@@ -171,21 +191,4 @@ def qty_dict_constructor(rec_df):
         qty_dict[ingr_dict[rec_df['ingr'][k]]] = rec_df['qty'][k]
     
     return qty_dict
-
-        
-def item_cost(item):
-    
-    recipe_qty = unit_converter(item.recipe.makes[0], item.recipe.makes[1], item.unit)[0]
-
-    item_cost = ( item.qty / recipe_qty ) * unit_converter(item.recipe.cost, 
-                                                                     item.recipe.makes[1], item.unit)[0]
-    
-    return item_cost
-    
-    
-def item_price(item, scale_factor=3):
-    
-    item_price = scale_factor * item.cost
-    
-    return item_price
 
