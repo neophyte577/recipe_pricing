@@ -2,7 +2,6 @@ from warnings import simplefilter
 simplefilter(action='ignore', category=Warning)
 import numpy as np
 import pandas as pd
-import os
 
 # Classes
 
@@ -15,9 +14,9 @@ class ingr():
     
 class recipe():
     
-    def __init__(self, name, df, makes_list):
+    def __init__(self, name, rec_df, makes_list):
         self.name = name
-        self.qty_dict = qty_dict_constructor(df)
+        self.qty_dict = qty_dict_constructor(rec_df)
         self.cost = rec_cost(self)
         self.makes = makes_list
         self.breakdown = [[k.name, self.qty_dict[k], ingr_dict[k.name].unit] for k in self.__dict__['qty_dict']]
@@ -47,9 +46,10 @@ vol_dict = {'c':1, 'cup':1, 'ml':236.5882365, 'oz':8, 'floz':8, 'tbsp':16, 'tsp'
 
 dict_list = [count_dict, weight_dict, vol_dict]
 
-ingr_dict = {}
+ingr_list, ingr_dict = [], {}
 
 rec_list, rec_dict = [], {}
+
 
 # Functions
 
@@ -140,9 +140,9 @@ def ingr_dict_constructor(ingr_df):
     return ingr_dict
 
 
-def recipe_converter(df):
+def recipe_converter(rec_df):
     
-    dfc = df.copy(deep=True)
+    df = rec_df.copy(deep=True)
     
     for k in range(df.shape[0]):
         
@@ -160,15 +160,15 @@ def recipe_converter(df):
         else:
             print('WRONG!')
             
-    return dfc
+    return df
 
 
-def qty_dict_constructor(df):
+def qty_dict_constructor(rec_df):
 
     qty_dict = {}
 
-    for k in range(df.shape[0]):
-        qty_dict[ingr_dict[df['ingr'][k]]] = df['qty'][k]
+    for k in range(rec_df.shape[0]):
+        qty_dict[ingr_dict[rec_df['ingr'][k]]] = rec_df['qty'][k]
     
     return qty_dict
 
