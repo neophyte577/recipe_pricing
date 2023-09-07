@@ -43,7 +43,7 @@ class item():
             
         else:
             print(size)
-            print('WRONG!')      
+            print('WRONG!')
             
     def price(self, size, scale_factor=3):
         
@@ -146,9 +146,11 @@ def ingr_dict_constructor(ingr_df):
 
                     converted_cost = cost_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[0]
 
-                    converted_unit = cost_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[1]
+                    converted_unit = unit_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[1]
         
                     ingr_dict[df['name'][k]] = ingr(df['name'][k], converted_cost, converted_unit) 
+                    
+                    break
                 
                 else:
                     pass
