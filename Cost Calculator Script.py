@@ -8,10 +8,11 @@ import pandas as pd
 
 class ingr():
     
-    def __init__(self, name, cost, unit):
+    def __init__(self, name, cost, unit, each_dict={}):
         self.name = name
         self.cost = cost
         self.unit = unit
+        self.each = each_converter(each_dict)
     
 class recipe():
     
@@ -24,7 +25,7 @@ class recipe():
         
 class item():
     
-    def __init__(self, name, sizes_list, rec):
+    def __init__(self, name, rec, sizes_list):
         self.name = name
         self.sizes = sizes_list
         self.recipe = rec
@@ -33,7 +34,7 @@ class item():
         print('Name:' , self.name, '\nPortion:', self.qty, self.unit, '\nCost: $' + str(round(self.cost, 2)),
               '\nPrice: $' + str(self.price))
         
-    def cost(self, size):
+    def cost(self, size='portion'):
         
         if size in (item_sizes and self.sizes):
             
@@ -43,9 +44,10 @@ class item():
             
         else:
             print(size)
-            print('WRONG!')
+            print('WRONG!')      
             
-    def price(self, size, scale_factor=3):
+            
+    def price(self, size='portion', scale_factor=3):
         
         if size in (item_sizes and self.sizes):
     
@@ -73,11 +75,39 @@ rec_list, rec_dict = [], {}
 
 # Functions
 
+def each_converter(each_dict):
+    
+    if each_dict == {}:
+        
+        each = {}
+    
+    elif any(list(each_dict.keys())[0] in d for d in dict_list):
+        
+        for d in dict_list:
+            
+            if list(each_dict.keys())[0] in d:
+                
+                each = { k : ( d[list(each_dict.keys())[0]] / d[k]  ) * list(each_dict.values())[0]  for (k,v) in d.items()}
+                
+                break
+            
+            else:
+                pass  
+
+    else:
+        print(list(each_dict.keys())[0])
+        print('WRONG!')
+    
+    return each
+
+
 def rec_cost(recipe):
     
     rec_cost = 0
     
     for ingr in recipe.qty_dict:
+        
+        print(ingr.name, ingr.cost, recipe.qty_dict[ingr], ingr.unit)
         
         rec_cost += recipe.qty_dict[ingr] * ingr.cost
     
