@@ -2,17 +2,38 @@ from warnings import simplefilter
 simplefilter(action='ignore', category=Warning)
 import numpy as np
 import pandas as pd
-
+import funcy as fc
 
 # Classes
 
 class ingr():
     
-    def __init__(self, name, cost, unit, each_dict={}):
+    def __init__(self, name, unit_cost, unit, each_dict={}):
         self.name = name
-        self.cost = cost
         self.unit = unit
+        self.unit_cost = unit_cost
         self.each = each_converter(each_dict)
+        
+    def cost(self, qty=1, target_unit=None):
+        if target_unit == None:
+            ingr_cost = qty * self.unit_cost
+        elif target_unit in fc.join(dict_list):
+            ingr_cost = qty * cost_converter(self.unit_cost, self.unit, target_unit)
+        else:
+            print(target_unit)
+            print('WRONG!')
+        return ingr_cost
+    
+    def price(self, qty=1, target_unit=None, scale_factor=3):
+        if target_unit == None:
+            ingr_price = scale_factor * qty * self.unit_cost
+        elif target_unit in fc.join(dict_list):
+            ingr_price = scale_factor * qty * self.cost(target_unit)
+        else:
+            print(target_unit)
+            print('WRONG!')
+        return ingr_price
+    
     
 class recipe():
     
@@ -62,7 +83,7 @@ count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross'
 
 weight_dict = {'g':1, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
 
-vol_dict = {'c':1, 'cup':1, 'ml':236.5882365, 'oz':8, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 'qt':1/4, 'pt':1/2}
+vol_dict = {'c':1, 'cup':1, 'ml':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 'qt':1/4, 'pt':1/2}
 
 dict_list = [count_dict, weight_dict, vol_dict]
 
@@ -90,7 +111,7 @@ def each_converter(each_dict):
                 each = { k : ( d[list(each_dict.keys())[0]] / d[k]  ) * list(each_dict.values())[0]  for (k,v) in d.items()}
                 
                 break
-            
+                
             else:
                 pass  
 
@@ -107,7 +128,7 @@ def rec_cost(recipe):
     
     for ingr in recipe.qty_dict:
         
-        print(ingr.name, ingr.cost, recipe.qty_dict[ingr], ingr.unit)
+        #print(ingr.name, ingr.cost, recipe.qty_dict[ingr], ingr.unit, recipe.qty_dict[ingr] * ingr.cost)
         
         rec_cost += recipe.qty_dict[ingr] * ingr.cost
     
@@ -144,6 +165,7 @@ def cost_converter(cost, per_unit, target_unit):
         for d in dict_list:
             
             if per_unit in d:
+                #print(d[per_unit], d[target_unit], cost)
                 converted_cost = ( d[per_unit] / d[target_unit] ) * cost
                 break
             else:
