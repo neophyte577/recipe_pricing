@@ -8,7 +8,7 @@ import funcy as fc
 
 class ingr():
     
-    def __init__(self, name, unit_cost, unit, each_dict={}):
+    def __init__(self, name, unit_cost, unit, each_dict={}, **density):
         self.name = name
         self.unit = unit
         self.unit_cost = unit_cost
@@ -43,6 +43,7 @@ class recipe():
         self.cost = rec_cost(self)
         self.makes = makes_dict
         self.breakdown = [{k.name:[self.qty_dict[k], ingr_dict[k.name].unit]} for k in self.__dict__['qty_dict']]
+
         
 class item():
     
@@ -56,25 +57,20 @@ class item():
               '\nPrice: $' + str(self.price))
         
     def cost(self, size='portion'):
-        
         if size in (item_sizes and self.sizes):
-            
             item_cost = self.recipe.cost / self.recipe.makes[size]
-    
             return item_cost
-            
         else:
             print(size)
             print('WRONG!')      
             
-            
     def price(self, size='portion', scale_factor=3):
-        
         if size in (item_sizes and self.sizes):
-    
             item_price = round(scale_factor * self.cost(size), 2)
-    
-        return item_price
+            return item_price
+        else:
+            print(size)
+            print('WRONG!')
 
 
 # Lists and Dictionaries
@@ -83,7 +79,8 @@ count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross'
 
 weight_dict = {'g':1, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
 
-vol_dict = {'c':1, 'cup':1, 'ml':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 'qt':1/4, 'pt':1/2}
+vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 
+            'qt':1/4, 'pt':1/2}
 
 dict_list = [count_dict, weight_dict, vol_dict]
 
@@ -109,7 +106,6 @@ def each_converter(each_dict):
             if list(each_dict.keys())[0] in d:
                 
                 each = { k : ( d[list(each_dict.keys())[0]] / d[k]  ) * list(each_dict.values())[0]  for (k,v) in d.items()}
-                
                 break
                 
             else:
@@ -130,7 +126,7 @@ def rec_cost(recipe):
         
         #print(ingr.name, ingr.cost, recipe.qty_dict[ingr], ingr.unit, recipe.qty_dict[ingr] * ingr.cost)
         
-        rec_cost += recipe.qty_dict[ingr] * ingr.cost
+        rec_cost += recipe.qty_dict[ingr] * ingr.unit_cost
     
     return rec_cost
 
