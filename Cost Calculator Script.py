@@ -3,16 +3,19 @@ simplefilter(action='ignore', category=Warning)
 import numpy as np
 import pandas as pd
 import funcy as fc
+import os
+
 
 # Classes
 
 class ingr():
     
-    def __init__(self, name, unit_cost, unit, each_dict={}, **density):
+    def __init__(self, name, unit_cost, unit, each_dict={}, density_dict={}):
         self.name = name
         self.unit = unit
         self.unit_cost = unit_cost
         self.each = each_converter(each_dict)
+        self.density = density_dict
         
     def cost(self, qty=1, target_unit=None):
         if target_unit == None:
@@ -43,8 +46,8 @@ class recipe():
         self.cost = rec_cost(self)
         self.makes = makes_dict
         self.breakdown = [{k.name:[self.qty_dict[k], ingr_dict[k.name].unit]} for k in self.__dict__['qty_dict']]
-
         
+
 class item():
     
     def __init__(self, name, rec, sizes_list):
@@ -79,8 +82,8 @@ count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross'
 
 weight_dict = {'g':1, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
 
-vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 'gal':1/16, 
-            'qt':1/4, 'pt':1/2}
+vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 
+            'tsp':48, 'gal':1/16, 'qt':1/4, 'pt':1/2}
 
 dict_list = [count_dict, weight_dict, vol_dict]
 
@@ -241,4 +244,48 @@ def qty_dict_constructor(rec_df):
         qty_dict[ingr_dict[rec_df['ingr'][k]]] = rec_df['qty'][k]
     
     return qty_dict
+
+
+
+# Obtener ingredientes y recetas
+
+try:
+    ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
+
+    ingredients_directory = os.fsencode(ingredients_loc)
+
+    ingr_dfs = []
+
+    for file in os.listdir(ingredients_directory):
+        filename = os.fsdecode(file)
+        ingr_df = pd.read_csv(ingredients_loc + '/' + filename)
+        ingr_dfs.append(df)
+    
+    ingr_df = pd.concat(ingr_dfs, ignore_index=True)
+
+    ingr_dict = ingr_dict_constructor(ingr_df)
+
+except Exception as error:
+    print(error)
+    print('No sweat, just rememeber to read in the ingredients manually')
+
+try:
+    recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
+
+    recipe_directory = os.fsencode(recipes_loc)
+
+    recipe_dict = {}
+
+    for file in os.listdir(recipe_directory):
+        filename = os.fsdecode(file)
+        rec_df = pd.read_csv(recipes_loc + '/' + filename)
+        makes_dict = {}
+        for k in range(rec_df['makes', 'makes_unit'].shape[0])
+            makes_dict[df['makes_unit'][k]] = df['makes'][k]
+        rec_df.drop(['makes', 'makes_unit'], axis=columns)
+        recipe_dict[filename] = recipe(filename, rec_df, makes_dict)
+except Exception as error:
+    print(error)
+    print("But that's okay")
+
 
