@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import funcy as fc
 import os
+import traceback
 
 
 # Classes
@@ -45,7 +46,9 @@ class recipe():
         self.qty_dict = qty_dict_constructor(recipe_converter(rec_df))
         self.cost = rec_cost(self)
         self.makes = makes_dict
-        self.breakdown = [{k.name:[self.qty_dict[k], ingr_dict[k.name].unit]} for k in self.__dict__['qty_dict']]
+        self.breakdown = [ {rec_df['ingr'][k]:[ [rec_df['qty'][k], rec_df['unit'][k]], 
+                            [self.qty_dict[ingr_dict[rec_df['ingr'][k]]], ingr_dict[rec_df['ingr'][k]].unit] ] } 
+                               for k in range(rec_df.shape[0]) ]
         
 
 class item():
@@ -89,9 +92,9 @@ dict_list = [count_dict, weight_dict, vol_dict]
 
 item_sizes = ['portion', 'whole', 'full pan', 'half pan', 'quarter pan']
 
-ingr_list, ingr_dict = [], {}
+ingr_dict = {}
 
-rec_list, rec_dict = [], {}
+rec_dict = {}
 
 
 # Functions
@@ -246,7 +249,6 @@ def qty_dict_constructor(rec_df):
     return qty_dict
 
 
-
 # Obtener ingredientes y recetas
 
 try:
@@ -258,7 +260,7 @@ try:
 
     for file in os.listdir(ingredients_directory):
         filename = os.fsdecode(file)
-        ingr_df = pd.read_csv(ingredients_loc + '/' + filename)
+        df = pd.read_csv(ingredients_loc + '/' + filename)
         ingr_dfs.append(df)
     
     ingr_df = pd.concat(ingr_dfs, ignore_index=True)
@@ -280,12 +282,11 @@ try:
         filename = os.fsdecode(file)
         rec_df = pd.read_csv(recipes_loc + '/' + filename)
         makes_dict = {}
-        for k in range(rec_df['makes', 'makes_unit'].shape[0])
-            makes_dict[df['makes_unit'][k]] = df['makes'][k]
-        rec_df.drop(['makes', 'makes_unit'], axis=columns)
-        recipe_dict[filename] = recipe(filename, rec_df, makes_dict)
+        for k in range(rec_df[['makes', 'size']].shape[0]):
+            makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
+        rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
+        recipe_dict[filename.replace('.csv','')] = recipe(filename, rec_df, makes_dict)
+
 except Exception as error:
     print(error)
-    print("But that's okay")
-
-
+    print(traceback.format_exc())
