@@ -9,14 +9,14 @@ import traceback
 
 # Classes
 
-class ingr():
+class Ingr():
     
-    def __init__(self, name, unit_cost, unit, each_dict={}, density_dict={}):
+    def __init__(self, name, unit_cost, unit, density=np.pi, each_dict={}):
         self.name = name
         self.unit = unit
         self.unit_cost = unit_cost
         self.each = each_converter(each_dict)
-        self.density = density_dict
+        self.density = density
         
     def cost(self, qty=1, target_unit=None):
         if target_unit == None:
@@ -39,19 +39,87 @@ class ingr():
         return ingr_price
     
     
-class recipe():
+class Recipe():
     
     def __init__(self, name, rec_df, makes_dict):
         self.name = name
-        self.qty_dict = qty_dict_constructor(recipe_converter(rec_df))
-        self.cost = rec_cost(self)
+        self.qty_dict = self.qty_dict_constructor(self.recipe_converter(rec_df))
+        self.cost = self.rec_cost()
         self.makes = makes_dict
         self.breakdown = [ {rec_df['ingr'][k]:[ [rec_df['qty'][k], rec_df['unit'][k]], 
-                            [self.qty_dict[ingr_dict[rec_df['ingr'][k]]], ingr_dict[rec_df['ingr'][k]].unit] ] } 
-                               for k in range(rec_df.shape[0]) ]
-        
+                            self.qty_dict[ingr_dict[rec_df['ingr'][k]]] ]} 
+                               for k in range(rec_df.shape[0]) ] + [ self.makes ]
+    
+    def recipe_converter(self, rec_df):
 
-class item():
+        df = rec_df.copy(deep=True)
+        
+        for k in range(df.shape[0]):
+            
+                if any(df['unit'][k] in d for d in dict_list):
+                    
+                    for d in dict_list:
+                        
+                        if df['unit'][k] in d:
+                            
+                            df['qty'][k], df['unit'][k] = unit_converter(df['qty'][k], df['unit'][k],
+                                                                            {v:k for k,v in d.items()}[1])  
+                        else:
+                            pass
+                else:
+                    print('WRONG!')
+        return df
+
+
+    def qty_dict_constructor(self, rec_df):
+
+        qty_dict = {}
+
+        for k in range(rec_df.shape[0]):
+
+            ingredient = ingr_dict[rec_df['ingr'][k]]
+
+            ingr_unit = ingredient.unit
+
+            rec_unit = rec_df['unit'][k]
+
+            if (rec_unit in weight_dict) and (ingr_unit in weight_dict):
+                print('1')
+                qty_dict[ingredient] = [ rec_df['qty'][k], 'g' ]
+
+            elif (rec_unit in vol_dict) and (ingr_unit in vol_dict):
+                print('2')
+                qty_dict[ingredient] = [ rec_df['qty'][k], 'c' ]
+
+            elif (rec_unit in vol_dict) and (ingr_unit in weight_dict) and (ingredient.density != np.pi):
+                print('3')
+                qty_dict[ingredient] = [ ingredient.density * rec_df['qty'][k], 'g' ]
+
+            elif (rec_unit in weight_dict) and (ingr_unit in vol_dict) and (ingredient.density != np.pi):
+                print('4')
+                qty_dict[ingredient] = [ ( 1 / ingredient.density ) * rec_df['qty'][k], 'c' ]
+
+            elif rec_unit in count_dict:
+                print('5')
+                qty_dict[ingredient] = [ rec_df['qty'][k], 'ea' ]
+
+            else:
+                print('WRONG!!!1')
+
+        return qty_dict
+
+    def rec_cost(self):
+    
+        rec_cost = 0
+        
+        for ingr in self.qty_dict:
+            
+            rec_cost += self.qty_dict[ingr][0] * ingr.unit_cost
+        
+        return rec_cost
+    
+
+class Item():
     
     def __init__(self, name, rec, sizes_list):
         self.name = name
@@ -124,19 +192,6 @@ def each_converter(each_dict):
     return each
 
 
-def rec_cost(recipe):
-    
-    rec_cost = 0
-    
-    for ingr in recipe.qty_dict:
-        
-        #print(ingr.name, ingr.cost, recipe.qty_dict[ingr], ingr.unit, recipe.qty_dict[ingr] * ingr.cost)
-        
-        rec_cost += recipe.qty_dict[ingr] * ingr.unit_cost
-    
-    return rec_cost
-
-
 def unit_converter(qty, unit, target_unit):
     
     converted_qty = 0
@@ -167,7 +222,7 @@ def cost_converter(cost, per_unit, target_unit):
         for d in dict_list:
             
             if per_unit in d:
-                #print(d[per_unit], d[target_unit], cost)
+                
                 converted_cost = ( d[per_unit] / d[target_unit] ) * cost
                 break
             else:
@@ -201,8 +256,11 @@ def ingr_dict_constructor(ingr_df):
                     converted_cost = cost_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[0]
 
                     converted_unit = unit_converter(df['cost'][k], df['unit'][k], {v:k for (k,v) in d.items()}[1])[1]
-        
-                    ingr_dict[df['name'][k]] = ingr(df['name'][k], converted_cost, converted_unit) 
+                    
+                    if pd.isna(df['density'][k]):
+                        ingr_dict[df['name'][k]] = Ingr(df['name'][k], converted_cost, converted_unit)
+                    else:
+                        ingr_dict[df['name'][k]] = Ingr(df['name'][k], converted_cost, converted_unit, df['density'][k])
                     
                     break
                 
@@ -214,39 +272,6 @@ def ingr_dict_constructor(ingr_df):
             print('WRONG!')
 
     return ingr_dict
-
-
-def recipe_converter(rec_df):
-    
-    df = rec_df.copy(deep=True)
-    
-    for k in range(df.shape[0]):
-        
-        if any(df['unit'][k] in d for d in dict_list):
-            
-            for d in dict_list:
-                
-                if df['unit'][k] in d:
-                    
-                    df['qty'][k], df['unit'][k] = unit_converter(df['qty'][k], df['unit'][k],
-                                                                    {v:k for k,v in d.items()}[1])  
-                else:
-                    pass
-        
-        else:
-            print('WRONG!')
-            
-    return df
-
-
-def qty_dict_constructor(rec_df):
-
-    qty_dict = {}
-
-    for k in range(rec_df.shape[0]):
-        qty_dict[ingr_dict[rec_df['ingr'][k]]] = rec_df['qty'][k]
-    
-    return qty_dict
 
 
 # Obtener ingredientes y recetas
@@ -269,10 +294,12 @@ try:
 
 except Exception as error:
     print(error)
-    print('No sweat, just rememeber to read in the ingredients manually')
+    print('No sweat, just rememeber to read the ingredients in manually')
 
 try:
-    recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
+    #recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
+
+    recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
 
     recipe_directory = os.fsencode(recipes_loc)
 
@@ -282,11 +309,23 @@ try:
         filename = os.fsdecode(file)
         rec_df = pd.read_csv(recipes_loc + '/' + filename)
         makes_dict = {}
-        for k in range(rec_df[['makes', 'size']].shape[0]):
+        for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
+            print(rec_df['size'][k])
             makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
         rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
-        recipe_dict[filename.replace('.csv','')] = recipe(filename, rec_df, makes_dict)
+        recipe_dict[filename.replace('.csv','')] = Recipe(filename, rec_df, makes_dict)
 
 except Exception as error:
     print(error)
     print(traceback.format_exc())
+
+
+#print(Item('jerk chicken', recipe_dict['jerk chicken'], ['portion']).price('portion'))
+
+print(ingr_dict['test_ingr_2'].unit)
+print(ingr_dict['test_ingr_2'].density)
+print(recipe_dict['test recipe 1'].breakdown)
+print(recipe_dict['test recipe 1'].qty_dict)
+print(recipe_dict['test recipe 1'].cost)
+
+
