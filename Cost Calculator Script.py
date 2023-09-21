@@ -46,9 +46,9 @@ class Recipe():
         self.qty_dict = self.qty_dict_constructor(self.recipe_converter(rec_df))
         self.cost = self.rec_cost()
         self.makes = makes_dict
-        self.breakdown = [ {rec_df['ingr'][k]:[ [rec_df['qty'][k], rec_df['unit'][k]], 
+        self.breakdown = pd.DataFrame.from_dict( fc.join([ {rec_df['ingr'][k]:[ [rec_df['qty'][k], rec_df['unit'][k]], 
                             self.qty_dict[ingr_dict[rec_df['ingr'][k]]] ]} 
-                               for k in range(rec_df.shape[0]) ] + [ self.makes ]
+                               for k in range(rec_df.shape[0]) ]), orient='index', columns=['given', 'converted'] )
     
     def recipe_converter(self, rec_df):
 
@@ -70,7 +70,6 @@ class Recipe():
                     print('WRONG!')
         return df
 
-
     def qty_dict_constructor(self, rec_df):
 
         qty_dict = {}
@@ -84,27 +83,27 @@ class Recipe():
             rec_unit = rec_df['unit'][k]
 
             if (rec_unit in weight_dict) and (ingr_unit in weight_dict):
-                print('1')
+                #print('1')
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'g' ]
 
             elif (rec_unit in vol_dict) and (ingr_unit in vol_dict):
-                print('2')
+                #print('2')
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'c' ]
 
             elif (rec_unit in vol_dict) and (ingr_unit in weight_dict) and (ingredient.density != np.pi):
-                print('3')
+                #print('3')
                 qty_dict[ingredient] = [ ingredient.density * rec_df['qty'][k], 'g' ]
 
             elif (rec_unit in weight_dict) and (ingr_unit in vol_dict) and (ingredient.density != np.pi):
-                print('4')
+                #print('4')
                 qty_dict[ingredient] = [ ( 1 / ingredient.density ) * rec_df['qty'][k], 'c' ]
 
             elif rec_unit in count_dict:
-                print('5')
+                #print('5')
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'ea' ]
 
             else:
-                print('WRONG!!!1')
+                print('no diggity')
 
         return qty_dict
 
@@ -297,9 +296,9 @@ except Exception as error:
     print('No sweat, just rememeber to read the ingredients in manually')
 
 try:
-    #recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
+    recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
 
-    recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
+    #recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
 
     recipe_directory = os.fsencode(recipes_loc)
 
@@ -310,9 +309,10 @@ try:
         rec_df = pd.read_csv(recipes_loc + '/' + filename)
         makes_dict = {}
         for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
-            print(rec_df['size'][k])
+            #print(rec_df['size'][k])
             makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
         rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
+        #print(rec_df.head())
         recipe_dict[filename.replace('.csv','')] = Recipe(filename, rec_df, makes_dict)
 
 except Exception as error:
@@ -320,12 +320,21 @@ except Exception as error:
     print(traceback.format_exc())
 
 
-#print(Item('jerk chicken', recipe_dict['jerk chicken'], ['portion']).price('portion'))
+print(recipe_dict['salmon'].breakdown)
+print(Item('salmon', recipe_dict['salmon'], ['portion']).price('portion'))
 
+'''
+print(recipe_dict['jerk chicken'].breakdown)
+print(Item('jerk chicken', recipe_dict['jerk chicken'], ['portion']).price('portion'))
+'''
+
+'''
 print(ingr_dict['test_ingr_2'].unit)
 print(ingr_dict['test_ingr_2'].density)
 print(recipe_dict['test recipe 1'].breakdown)
 print(recipe_dict['test recipe 1'].qty_dict)
 print(recipe_dict['test recipe 1'].cost)
+print(Item('test item 1', recipe_dict['test recipe 1'], ['portion']).price())
+'''
 
 
