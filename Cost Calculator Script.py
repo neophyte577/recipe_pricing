@@ -97,22 +97,21 @@ class Recipe():
                             self.qty_dict[ingr_dict[rec_df['ingr'][k]]] ]} 
                                for k in range(rec_df.shape[0]) ]), orient='index', columns=['given', 'converted'] )
     
+
     def recipe_converter(self, rec_df):
 
         df = rec_df.copy(deep=True)
-        
+
         for k in range(df.shape[0]):
-            
-                if any(df['unit'][k] in d for d in dict_list):
-                    
+            if any(df['unit'][k] in d for d in dict_list):
                     for d in dict_list:
-                        
                         if df['unit'][k] in d:
                             df['qty'][k], df['unit'][k] = unit_converter(df['qty'][k], df['unit'][k], {v:k for k,v in d.items()}[1]) 
                         else:
                             pass
-                else:
-                    print('WRONG!')
+            else:
+                print('WRONG!')
+                
         return df
     
 
@@ -158,19 +157,36 @@ class Recipe():
         
         return rec_cost
     
-    '''
-    def to_ingr(self, item_unit=None):
 
-        if any(s in fc.join([vol_dict, weight_dict]) for s in [self.makes[k] for k in self.makes]):
-            if item_unit == None and any(s in weight_dict for s in [self.makes[k] for k in self.makes]):
-                item_unit = 'g'
-            elif item_unit == None and any(s in vol_dict for s in [self.makes[k] for k in self.makes]):
-                item_unit = 'c'
-            unit_cost = self.cost * 
-            ingr_dict.update(self.name : Ingr(self.name, item_unit))
+    def to_ingr(self, density=np.pi, each_list=[]):
+
+        if any(s in fc.join(dict_list) for s in list(self.makes.keys())):
+            for s in list(self.makes.keys()):
+                if s in weight_dict:
+                    yield_unit = s
+                    ingr_unit = 'g'
+                    converted_yield = unit_converter(self.makes[s], yield_unit, ingr_unit)[0]
+                    unit_cost = (1 / converted_yield) * cost_converter(self.cost, yield_unit, ingr_unit)[0]
+                    break
+                elif s in vol_dict:
+                    yield_unit = s
+                    ingr_unit = 'c'
+                    converted_yield = unit_converter(self.makes[s], yield_unit, ingr_unit)[0]
+                    unit_cost = (1 / converted_yield) * cost_converter(self.cost, yield_unit, ingr_unit)[0]
+                    break
+                elif s in count_dict:
+                    yield_unit = s
+                    ingr_unit = 'ea'
+                    converted_yield = unit_converter(self.makes[s], yield_unit, ingr_unit)[0]
+                    unit_cost = (1 / converted_yield) * cost_converter(self.cost, yield_unit, ingr_unit)[0]
+                else:
+                    pass
+            #print(yield_unit, ingr_unit, converted_yield, unit_cost)
+            ingr_dict.update({self.name : Ingredient(self.name, unit_cost, ingr_unit, density, each_list)})
+
         else:
-            print('WRONG! to_item')
-'''
+            print('WRONG! cannot to_item without volume, weight, or count yield')
+
 
 class Item():
     
@@ -334,18 +350,19 @@ try:
 
     recipe_directory = os.fsencode(recipes_loc)
 
-    recipe_dict = {}
+    rec_dict = {}
 
     for file in os.listdir(recipe_directory):
         filename = os.fsdecode(file)
         rec_df = pd.read_csv(recipes_loc + '/' + filename)
         makes_dict = {}
         for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
-            #print(rec_df['size'][k])
             makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
         rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
-        #print(rec_df.head())
-        recipe_dict[filename.replace('.csv','')] = Recipe(filename, rec_df, makes_dict)
+        name = filename.replace('.csv','')
+        rec_dict[name] = Recipe(name, rec_df, makes_dict)
+        if any(s in fc.join(dict_list) for s in list(rec_dict[name].makes.keys())):
+            rec_dict[name].to_ingr()
 
 except Exception as error:
     print(error)
@@ -353,25 +370,30 @@ except Exception as error:
 
 
 '''
-#print(recipe_dict['salmon'].breakdown)
-#print(Item('salmon', recipe_dict['salmon'], ['portion']).price('portion'))
+#print(rec_dict['salmon'].breakdown)
+#print(Item('salmon', rec_dict['salmon'], ['portion']).price('portion'))
 print(ingr_dict['salmon'].cost(1,'lb'))
 print(ingr_dict['salmon'].each)
 print(ingr_dict['salmon'].each_cost('lb'))
 '''
 
 '''
-print(recipe_dict['jerk chicken'].breakdown)
-print(Item('jerk chicken', recipe_dict['jerk chicken'], ['portion']).price('portion'))
+print(rec_dict['jerk chicken'].cost)
+print(rec_dict['jerk chicken'].makes)
+print(Item('jerk chicken', rec_dict['jerk chicken'], ['portion']).price('portion'))
+
+print(rec_dict['jerk turkey'].cost)
+print(rec_dict['jerk turkey'].makes)
+print(Item('jerk turkey', rec_dict['jerk turkey'], ['portion']).price('portion'))
 '''
 
 '''
 print(ingr_dict['test_ingr_2'].unit)
 print(ingr_dict['test_ingr_2'].density)
-print(recipe_dict['test recipe 1'].breakdown)
-print(recipe_dict['test recipe 1'].qty_dict)
-print(recipe_dict['test recipe 1'].cost)
-print(Item('test item 1', recipe_dict['test recipe 1'], ['portion']).price())
+print(rec_dict['test recipe 1'].breakdown)
+print(rec_dict['test recipe 1'].qty_dict)
+print(rec_dict['test recipe 1'].cost)
+print(Item('test item 1', rec_dict['test recipe 1'], ['portion']).price())
 '''
 
 
