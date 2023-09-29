@@ -331,7 +331,7 @@ def item_dict_constructor(rec_dict):
     
     return(item_dict)
 
-
+'''
 # Obtener ingredientes y recetas
 
 try:
@@ -385,6 +385,79 @@ except Exception as error:
 ###########################################
 item_dict = item_dict_constructor(rec_dict)
 ###########################################
+'''
+
+def main():
+
+    try:
+        ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
+
+        #ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Test Ingredients'
+
+        ingredients_directory = os.fsencode(ingredients_loc)
+
+        ingr_dfs = []
+
+        for file in os.listdir(ingredients_directory):
+            filename = os.fsdecode(file)
+            df = pd.read_csv(ingredients_loc + '/' + filename)
+            ingr_dfs.append(df)
+        
+        ingr_df = pd.concat(ingr_dfs, ignore_index=True)
+
+        global ingr_dict 
+        ingr_dict = ingr_dict_constructor(ingr_df)
+
+        print(ingr_dict)
+
+    except Exception as error:
+        print(error)
+        print('NO INGREDIENTS!!!1')
+
+    try:
+        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
+
+        #recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
+
+        recipe_directory = os.fsencode(recipes_loc)
+
+        global rec_dict
+        rec_dict = {}
+
+        for file in os.listdir(recipe_directory):
+            filename = os.fsdecode(file)
+            rec_df = pd.read_csv(recipes_loc + '/' + filename)
+            makes_dict = {}
+            for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
+                makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
+            rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
+            name = filename.replace('.csv','')
+            rec_dict[name] = Recipe(name, rec_df, makes_dict)
+            if any(s in fc.join(dict_list) for s in list(rec_dict[name].makes.keys())):
+                rec_dict[name].to_ingr()
+
+    except Exception as error:
+        print(error)
+        print(traceback.format_exc())
+
+    global item_dict
+    ###########################################
+    item_dict = item_dict_constructor(rec_dict)
+    ###########################################
+
+    '''
+    print(ingr_dict['salmon'].cost(1,'lb'))
+    print(ingr_dict['salmon'].each)
+    print(ingr_dict['salmon'].each_cost('lb'))
+    print(rec_dict['salmon'].breakdown)
+    print(item_dict['salmon'].price('portion'))   
+    '''
+    
+if __name__ == '__main__':
+    main()
+
+
+
 
 '''
 print(ingr_dict['salmon'].cost(1,'lb'))
