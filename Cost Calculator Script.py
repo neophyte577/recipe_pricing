@@ -36,9 +36,10 @@ class Ingredient():
                 print('watt')
         else:
             print(target_unit)
-            print('WRONG! 577')
+            print('WRONG! ingr cost')
 
         return ingr_cost, target_unit
+    
     
     def price(self, qty=1, target_unit=None, scale_factor=3):
 
@@ -48,9 +49,10 @@ class Ingredient():
             ingr_price = scale_factor * qty * self.cost(target_unit)
         else:
             print(target_unit)
-            print('WRONG!')
+            print('WRONG! ingr price')
 
         return ingr_price
+    
 
     def each_converter(self, each_list):
     
@@ -65,11 +67,11 @@ class Ingredient():
                     pass
         else:
             print(each_list[1])
-            print('WRONG! each_converter')
+            print('WRONG! ingr each_converter')
 
         return each
     
-
+    
     def each_cost(self, each_unit=None):
 
         if each_unit == None:
@@ -83,7 +85,7 @@ class Ingredient():
             else:
                 print('ALREADY EACH!!!')
         else:
-            print('NO EACH 4 U !!1')
+            print('WRONG! each_cost')
 
     
 class Recipe():
@@ -190,10 +192,10 @@ class Recipe():
 
 class Item():
     
-    def __init__(self, name, rec, sizes_list):
+    def __init__(self, name, recipe, additional_sizes=[]):
         self.name = name
-        self.sizes = sizes_list
-        self.recipe = rec
+        self.sizes = list(recipe.makes.keys()) + additional_sizes
+        self.recipe = recipe
         
     def specs(self):
         print('Name:' , self.name, '\nPortion:', self.qty, self.unit, '\nCost: $' + str(round(self.cost, 2)),
@@ -220,7 +222,7 @@ class Item():
 
 count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross':1/144}
 
-weight_dict = {'g':1, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
+weight_dict = {'g':1, 'kg':0.001, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
 
 vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 
             'tsp':48, 'dash':384, 'gal':1/16, 'bushel':1/128, 'qt':1/4, 'pt':1/2}
@@ -319,6 +321,17 @@ def ingr_dict_constructor(ingr_df):
     return ingr_dict
 
 
+def item_dict_constructor(rec_dict):
+
+    item_dict = {}
+
+    for recipe_name in rec_dict:
+
+        item_dict.update({ recipe_name : Item(recipe_name, rec_dict[recipe_name]) })
+    
+    return(item_dict)
+
+
 # Obtener ingredientes y recetas
 
 try:
@@ -369,22 +382,29 @@ except Exception as error:
     print(traceback.format_exc())
 
 
+###########################################
+item_dict = item_dict_constructor(rec_dict)
+###########################################
+
 '''
-#print(rec_dict['salmon'].breakdown)
-#print(Item('salmon', rec_dict['salmon'], ['portion']).price('portion'))
 print(ingr_dict['salmon'].cost(1,'lb'))
 print(ingr_dict['salmon'].each)
 print(ingr_dict['salmon'].each_cost('lb'))
+print(rec_dict['salmon'].breakdown)
+print(item_dict['salmon'].price('portion'))
 '''
 
 '''
 print(rec_dict['jerk chicken'].cost)
 print(rec_dict['jerk chicken'].makes)
 print(Item('jerk chicken', rec_dict['jerk chicken'], ['portion']).price('portion'))
+'''
 
+'''
 print(rec_dict['jerk turkey'].cost)
 print(rec_dict['jerk turkey'].makes)
-print(Item('jerk turkey', rec_dict['jerk turkey'], ['portion']).price('portion'))
+print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).cost('whole'))
+print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).price('whole'))
 '''
 
 '''
