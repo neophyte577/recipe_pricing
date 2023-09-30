@@ -124,26 +124,19 @@ class Recipe():
         for k in range(rec_df.shape[0]):
 
             ingredient = ingr_dict[rec_df['ingr'][k]]
-
             ingr_unit = ingredient.unit
-
             rec_unit = rec_df['unit'][k]
 
             if (rec_unit in weight_dict) and (ingr_unit in weight_dict):
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'g' ]
-
             elif (rec_unit in vol_dict) and (ingr_unit in vol_dict):
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'c' ]
-
             elif (rec_unit in vol_dict) and (ingr_unit in weight_dict) and (ingredient.density != np.pi):
                 qty_dict[ingredient] = [ ingredient.density * rec_df['qty'][k], 'g' ]
-
             elif (rec_unit in weight_dict) and (ingr_unit in vol_dict) and (ingredient.density != np.pi):
                 qty_dict[ingredient] = [ ( 1 / ingredient.density ) * rec_df['qty'][k], 'c' ]
-
             elif rec_unit in count_dict:
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'ea' ]
-
             else:
                 print('no diggity')
 
@@ -218,7 +211,7 @@ class Item():
             print('WRONG!')
 
 
-# Lists and Dictionaries
+# Lists and Dictionaries (Global)
 
 count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross':1/144}
 
@@ -230,6 +223,8 @@ vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365
 dict_list = [count_dict, weight_dict, vol_dict]
 
 item_sizes = ['portion', 'whole', 'full pan', 'half pan', 'quarter pan']
+
+ingr_dict, rec_dict, item_dict = {}, {}, {}
 
 
 # Functions
@@ -331,6 +326,159 @@ def item_dict_constructor(rec_dict):
     
     return(item_dict)
 
+
+def main():
+
+    try:
+        ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
+
+        ingredients_directory = os.fsencode(ingredients_loc)
+
+        ingr_dfs = []
+
+        for file in os.listdir(ingredients_directory):
+            filename = os.fsdecode(file)
+            df = pd.read_csv(ingredients_loc + '/' + filename)
+            ingr_dfs.append(df)
+        
+        ingr_df = pd.concat(ingr_dfs, ignore_index=True)
+        
+        ingr_dict.update(ingr_dict_constructor(ingr_df))
+
+    except Exception as error:
+        print(error)
+        print('NO INGREDIENTS!!!1')
+
+    try:
+        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
+
+        recipe_directory = os.fsencode(recipes_loc)
+
+        rec_dict_main = {}
+
+        for file in os.listdir(recipe_directory):
+            filename = os.fsdecode(file)
+            rec_df = pd.read_csv(recipes_loc + '/' + filename)
+            makes_dict = {}
+            for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
+                makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
+            rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
+            name = filename.replace('.csv','')
+            rec_dict_main[name] = Recipe(name, rec_df, makes_dict)
+            if any(s in fc.join(dict_list) for s in list(rec_dict_main[name].makes.keys())):
+                rec_dict_main[name].to_ingr()
+            
+        rec_dict.update(rec_dict_main)
+
+    except Exception as error:
+        print(error)
+        print(traceback.format_exc())
+
+    #################################################
+    item_dict.update(item_dict_constructor(rec_dict))
+    #################################################
+
+    print(ingr_dict['salmon'].cost(1,'lb'))
+    print(ingr_dict['salmon'].each)
+    print(ingr_dict['salmon'].each_cost('lb'))
+    print(rec_dict['salmon'].breakdown)
+    print(item_dict['salmon'].price('portion'))  
+
+
+def test():
+
+    try:
+        ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Test Ingredients'
+
+        ingredients_directory = os.fsencode(ingredients_loc)
+
+        ingr_dfs = []
+
+        for file in os.listdir(ingredients_directory):
+            filename = os.fsdecode(file)
+            df = pd.read_csv(ingredients_loc + '/' + filename)
+            ingr_dfs.append(df)
+        
+        ingr_df = pd.concat(ingr_dfs, ignore_index=True)
+        
+        ingr_dict.update(ingr_dict_constructor(ingr_df))
+
+    except Exception as error:
+        print(error)
+        print('NO INGREDIENTS!!!1')
+
+    try:
+        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
+
+        recipe_directory = os.fsencode(recipes_loc)
+
+        rec_dict_main = {}
+
+        for file in os.listdir(recipe_directory):
+            filename = os.fsdecode(file)
+            rec_df = pd.read_csv(recipes_loc + '/' + filename)
+            makes_dict = {}
+            for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
+                makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
+            rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
+            name = filename.replace('.csv','')
+            rec_dict_main[name] = Recipe(name, rec_df, makes_dict)
+            if any(s in fc.join(dict_list) for s in list(rec_dict_main[name].makes.keys())):
+                rec_dict_main[name].to_ingr()
+            
+        rec_dict.update(rec_dict_main)
+
+    except Exception as error:
+        print(error)
+        print(traceback.format_exc())
+
+    #################################################
+    item_dict.update(item_dict_constructor(rec_dict))
+    #################################################
+
+    print(ingr_dict['test_ingr_2'].unit)
+    print(ingr_dict['test_ingr_2'].density)
+    print(rec_dict['test recipe 1'].breakdown)
+    print(rec_dict['test recipe 1'].cost)
+    print(item_dict['test recipe 1'].price('portion'))
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+'''
+print(ingr_dict['salmon'].cost(1,'lb'))
+print(ingr_dict['salmon'].each)
+print(ingr_dict['salmon'].each_cost('lb'))
+print(rec_dict['salmon'].breakdown)
+print(item_dict['salmon'].price('portion'))
+'''
+
+'''
+print(rec_dict['jerk chicken'].cost)
+print(rec_dict['jerk chicken'].makes)
+print(Item('jerk chicken', rec_dict['jerk chicken'], ['portion']).price('portion'))
+'''
+
+'''
+print(rec_dict['jerk turkey'].cost)
+print(rec_dict['jerk turkey'].makes)
+print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).cost('whole'))
+print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).price('whole'))
+'''
+
+'''
+print(ingr_dict['test_ingr_2'].unit)
+print(ingr_dict['test_ingr_2'].density)
+print(rec_dict['test recipe 1'].breakdown)
+print(rec_dict['test recipe 1'].qty_dict)
+print(rec_dict['test recipe 1'].cost)
+print(Item('test item 1', rec_dict['test recipe 1'], ['portion']).price())
+'''
+
+
 '''
 # Obtener ingredientes y recetas
 
@@ -386,107 +534,3 @@ except Exception as error:
 item_dict = item_dict_constructor(rec_dict)
 ###########################################
 '''
-
-def main():
-
-    try:
-        ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
-
-        #ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Test Ingredients'
-
-        ingredients_directory = os.fsencode(ingredients_loc)
-
-        ingr_dfs = []
-
-        for file in os.listdir(ingredients_directory):
-            filename = os.fsdecode(file)
-            df = pd.read_csv(ingredients_loc + '/' + filename)
-            ingr_dfs.append(df)
-        
-        ingr_df = pd.concat(ingr_dfs, ignore_index=True)
-
-        global ingr_dict 
-        ingr_dict = ingr_dict_constructor(ingr_df)
-
-        print(ingr_dict)
-
-    except Exception as error:
-        print(error)
-        print('NO INGREDIENTS!!!1')
-
-    try:
-        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
-
-        #recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
-
-        recipe_directory = os.fsencode(recipes_loc)
-
-        global rec_dict
-        rec_dict = {}
-
-        for file in os.listdir(recipe_directory):
-            filename = os.fsdecode(file)
-            rec_df = pd.read_csv(recipes_loc + '/' + filename)
-            makes_dict = {}
-            for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
-                makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
-            rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
-            name = filename.replace('.csv','')
-            rec_dict[name] = Recipe(name, rec_df, makes_dict)
-            if any(s in fc.join(dict_list) for s in list(rec_dict[name].makes.keys())):
-                rec_dict[name].to_ingr()
-
-    except Exception as error:
-        print(error)
-        print(traceback.format_exc())
-
-    global item_dict
-    ###########################################
-    item_dict = item_dict_constructor(rec_dict)
-    ###########################################
-
-    '''
-    print(ingr_dict['salmon'].cost(1,'lb'))
-    print(ingr_dict['salmon'].each)
-    print(ingr_dict['salmon'].each_cost('lb'))
-    print(rec_dict['salmon'].breakdown)
-    print(item_dict['salmon'].price('portion'))   
-    '''
-    
-if __name__ == '__main__':
-    main()
-
-
-
-
-'''
-print(ingr_dict['salmon'].cost(1,'lb'))
-print(ingr_dict['salmon'].each)
-print(ingr_dict['salmon'].each_cost('lb'))
-print(rec_dict['salmon'].breakdown)
-print(item_dict['salmon'].price('portion'))
-'''
-
-'''
-print(rec_dict['jerk chicken'].cost)
-print(rec_dict['jerk chicken'].makes)
-print(Item('jerk chicken', rec_dict['jerk chicken'], ['portion']).price('portion'))
-'''
-
-'''
-print(rec_dict['jerk turkey'].cost)
-print(rec_dict['jerk turkey'].makes)
-print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).cost('whole'))
-print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).price('whole'))
-'''
-
-'''
-print(ingr_dict['test_ingr_2'].unit)
-print(ingr_dict['test_ingr_2'].density)
-print(rec_dict['test recipe 1'].breakdown)
-print(rec_dict['test recipe 1'].qty_dict)
-print(rec_dict['test recipe 1'].cost)
-print(Item('test item 1', rec_dict['test recipe 1'], ['portion']).price())
-'''
-
-
