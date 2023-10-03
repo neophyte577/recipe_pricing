@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import funcy as fc
 import os
+
 import traceback
+from time import time
 
 
 # Classes
@@ -99,23 +101,24 @@ class Recipe():
                             self.qty_dict[ingr_dict[rec_df['ingr'][k]]] ]} 
                                for k in range(rec_df.shape[0]) ]), orient='index', columns=['given', 'converted'] )
     
-
+##############################################################################################
     def recipe_converter(self, rec_df):
 
         df = rec_df.copy(deep=True)
 
         for k in range(df.shape[0]):
             if any(df['unit'][k] in d for d in dict_list):
-                    for d in dict_list:
-                        if df['unit'][k] in d:
-                            df['qty'][k], df['unit'][k] = unit_converter(df['qty'][k], df['unit'][k], {v:k for k,v in d.items()}[1]) 
-                        else:
-                            pass
+                for d in dict_list:
+                    if df['unit'][k] in d:
+                        df['qty'][k], df['unit'][k] = unit_converter(df['qty'][k], df['unit'][k], {v:k for k,v in d.items()}[1]) 
+                    else:
+                        pass
             else:
                 print('WRONG!')
                 
         return df
-    
+    # ^^FIX THIS (needs not so many loops/if-elses?)^^
+    ############################################################################################
 
     def qty_dict_constructor(self, rec_df):
 
@@ -360,8 +363,8 @@ def main():
             filename = os.fsdecode(file)
             rec_df = pd.read_csv(recipes_loc + '/' + filename)
             makes_dict = {}
-            for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
-                makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
+            makes_df = rec_df[rec_df[['makes','size']].notnull().all(axis='columns')][['makes','size']]
+            makes_dict = pd.Series(makes_df['makes'].values, index=makes_df['size']).to_dict()
             rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
             name = filename.replace('.csv','')
             rec_dict_main[name] = Recipe(name, rec_df, makes_dict)
@@ -378,11 +381,11 @@ def main():
     item_dict.update(item_dict_constructor(rec_dict))
     #################################################
 
-    print(ingr_dict['salmon'].cost(1,'lb'))
-    print(ingr_dict['salmon'].each)
-    print(ingr_dict['salmon'].each_cost('lb'))
-    print(rec_dict['salmon'].breakdown)
-    print(item_dict['salmon'].price('portion'))  
+    print(rec_dict['jerk turkey'].breakdown)
+    print(rec_dict['jerk turkey'].cost)
+    print(rec_dict['jerk turkey'].makes)
+    print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).cost('whole'))
+    print(Item('jerk turkey', rec_dict['jerk turkey'], ['whole']).price('whole')) 
 
 
 def test():
@@ -418,9 +421,10 @@ def test():
             filename = os.fsdecode(file)
             rec_df = pd.read_csv(recipes_loc + '/' + filename)
             makes_dict = {}
-            for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
-                makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
-            rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
+            makes_df = rec_df[rec_df[['makes','size']].notnull().all(axis='columns')][['makes','size']]
+            makes_dict = pd.Series(makes_df['makes'].values, index=makes_df['size']).to_dict()
+            print(makes_dict)
+            rec_df.drop(['makes', 'size'], axis='columns', inplace=True) 
             name = filename.replace('.csv','')
             rec_dict_main[name] = Recipe(name, rec_df, makes_dict)
             if any(s in fc.join(dict_list) for s in list(rec_dict_main[name].makes.keys())):
@@ -442,9 +446,15 @@ def test():
     print(rec_dict['test recipe 1'].cost)
     print(item_dict['test recipe 1'].price('portion'))
 
+
+start = time()
+
 if __name__ == '__main__':
     main()
 
+end = time()
+
+print('Execution time:', end - start)
 
 
 
@@ -452,6 +462,7 @@ if __name__ == '__main__':
 print(ingr_dict['salmon'].cost(1,'lb'))
 print(ingr_dict['salmon'].each)
 print(ingr_dict['salmon'].each_cost('lb'))
+print(rec_dict['salmon'].makes)
 print(rec_dict['salmon'].breakdown)
 print(item_dict['salmon'].price('portion'))
 '''
