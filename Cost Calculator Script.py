@@ -55,7 +55,7 @@ class Ingredient():
             print('WRONG! ingr price')
 
         return ingr_price
-    
+  
 
     def each_converter(self, each_list):
     
@@ -64,7 +64,7 @@ class Ingredient():
         elif any(each_list[1] in d for d in dict_list):
             for d in dict_list:
                 if each_list[1] in d:
-                    each = { k : ( d[each_list[1]] / d[k]  ) * each_list[0] for (k,v) in d.items() }
+                    each = { k : ( d[k] / d[each_list[1]]  ) * each_list[0] for (k,v) in d.items() }
                     break
                 else:
                     pass
@@ -140,8 +140,18 @@ class Recipe():
                 qty_dict[ingredient] = [ ingredient.density * rec_df['qty'][k], 'g' ]
             elif (rec_unit in weight_dict) and (ingr_unit in vol_dict) and (ingredient.density != np.pi):
                 qty_dict[ingredient] = [ ( 1 / ingredient.density ) * rec_df['qty'][k], 'c' ]
-            elif rec_unit in count_dict:
+            elif (rec_unit in count_dict) and (ingr_unit in count_dict):
                 qty_dict[ingredient] = [ rec_df['qty'][k], 'ea' ]
+            elif (rec_unit in count_dict) and (ingr_unit in vol_dict):
+                if ingredient.each != {}:
+                    qty_dict[ingredient] = [ ingredient.each['c'] * rec_df['qty'][k] , 'c' ]
+                else:
+                    print('NO EACH!!!1 ingr_unit in volume dictionary')
+            elif (rec_unit in count_dict) and (ingr_unit in weight_dict):
+                if ingredient.each != {}:
+                    qty_dict[ingredient] = [ ingredient.each['g'] * rec_df['qty'][k] , 'g' ]
+                else:
+                    print('NO EACH!!!1 ingr_unit in weight dictionary')
             else:
                 print('no diggity')
 
@@ -222,7 +232,7 @@ count_dict = {'ea':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/20, 'gross'
 weight_dict = {'g':1, 'kg':0.001, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
 
 vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 
-            'tsp':48, 'dash':384, 'gal':1/16, 'bushel':1/128, 'qt':1/4, 'pt':1/2}
+            'tsp':48, 'dash':384, 'gal':1/16, 'ga':1/16, 'bushel':1/128, 'qt':1/4, 'pt':1/2}
 
 size_list = ['portion', 'whole', 'full pan', 'half pan', 'quarter pan']
 
@@ -417,6 +427,7 @@ def item_dict_constructor(rec_dict):
 def main():
 
     try:
+        
         ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
 
         ingredients_directory = os.fsencode(ingredients_loc)
@@ -466,6 +477,10 @@ def main():
     print()
     print(rec_dict['cabbage'].breakdown)
     print(item_dict['cabbage'].price('portion'))
+    print()
+    print(rec_dict['fried turkey'].breakdown)
+    print(item_dict['fried turkey'].cost('whole'))
+    print(item_dict['fried turkey'].price('whole'))
 
 #TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 def test():
@@ -535,6 +550,40 @@ if __name__ == '__main__':
 end = time()
 
 print('Execution time:', end - start)
+
+
+'''
+print()
+    print(ingr_dict['beef frank'].unit_cost)
+    print(ingr_dict['hot dog roll'].unit_cost)
+    print(ingr_dict['beef frank'].each)
+    print(rec_dict['hot dog'].breakdown)
+    print(item_dict['hot dog'].cost('portion'))
+    print(item_dict['hot dog'].price('portion', scale_factor=2.5))
+    print(item_dict['hot dog'].price('portion', scale_factor=2.5))
+    print()
+    print(ingr_dict['hot beef sausage'].unit_cost)
+    print(ingr_dict['hot dog roll'].unit_cost)
+    print(ingr_dict['hot beef sausage'].each)
+    print(rec_dict['half smoke'].breakdown)
+    print(item_dict['half smoke'].cost('portion'))
+    print(item_dict['half smoke'].price('portion', scale_factor=2))
+    print(item_dict['half smoke'].price('portion', scale_factor=2)*150)
+    print()
+    print(ingr_dict['slider patty'].unit_cost)
+    print(ingr_dict['cheese slice, american'].unit_cost)
+    print(ingr_dict['slider bun'].unit_cost)
+    print(ingr_dict['slider patty'].each)
+    print(rec_dict['slider'].breakdown)
+    print(item_dict['slider'].cost('portion'))
+    print(item_dict['slider'].price('portion', scale_factor=2.5))
+    print(item_dict['slider'].price('portion', scale_factor=2.5)*200)
+    print()
+
+    print(item_dict['hot dog'].price('portion', scale_factor=2.5) *150
+          + item_dict['half smoke'].price('portion', scale_factor=2) * 150
+          + item_dict['slider'].price('portion', scale_factor=2.5) * 200 )
+'''
 
 
 
