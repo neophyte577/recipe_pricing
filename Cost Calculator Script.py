@@ -153,12 +153,12 @@ class Recipe():
                 if ingredient.each != {}:
                     qty_dict[ingredient] = [ ingredient.each['c'] * rec_df['qty'][k] , 'c' ]
                 else:
-                    print('NO EACH!!!1 ingr_unit in volume dictionary')
+                    print('NO EACH!!!1 in', ingredient.name, 'no volume unit in each')
             elif (rec_unit in count_dict) and (ingr_unit in weight_dict):
                 if ingredient.each != {}:
                     qty_dict[ingredient] = [ ingredient.each['g'] * rec_df['qty'][k] , 'g' ]
                 else:
-                    print('NO EACH!!!1 ingr_unit in weight dictionary')
+                    print('NO EACH!!!1 in', ingredient.name, 'no weight unit in each')
             else:
                 print('DENSITY ERROR IN', self.name, ':', ingredient.name)
 
@@ -455,6 +455,21 @@ def item_dict_constructor(rec_dict):
     return item_dict
 
 
+def output_template(name, size, scale_factor=3):
+
+    print()
+    print(rec_dict[name].breakdown)
+    print()
+    print('Recipe cost:', rec_dict[name].cost)
+    print()
+    print('Item cost per', size + ':', item_dict[name].cost(size))
+    print()
+    print('Item price per', size, 'with scale factor of', str(scale_factor) + ':', item_dict[name].price(size, scale_factor))
+    print()
+    print('---------------------')
+    print()
+
+
 def main():
 
     try:
@@ -483,6 +498,21 @@ def main():
 
     try:
 
+        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Ingredient Recipes'
+
+        rec_df_dict = get_recipes(recipes_loc)
+
+        rec_dict_main = rec_dict_constructor(rec_df_dict)
+            
+        rec_dict.update(rec_dict_main)
+
+    except Exception as error:
+        print(error)
+        print(traceback.format_exc())
+        print('NO INGREDIENT RECIPES!!!1')
+
+    try:
+
         recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
 
         rec_df_dict = get_recipes(recipes_loc)
@@ -504,20 +534,10 @@ def main():
         print(traceback.format_exc())
         print('NO ITEMS!!!1')
     #######################################################
-    
-    print(rec_dict['shrimp etouffee'].breakdown)
-    print()
-    print(rec_dict['shrimp etouffee'].cost)
-    print()
-    print(item_dict['shrimp etouffee'].price('portion'))
-    print(item_dict['shrimp etouffee'].price('full pan'))
-    print()
-    print(rec_dict['zobo'].breakdown)
-    print()
-    print(16 * item_dict['zobo'].cost('floz'))
-    print()
-    print(item_dict['zobo'].price('gal'))
-    print()
+
+    output_template('crab bisque', 'portion', 2.5)
+        
+
         
 
 #TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
@@ -584,6 +604,22 @@ end = time()
 print('Execution time:', end - start)
 print()
 
+
+'''
+print(rec_dict['shrimp etouffee'].breakdown)
+print()
+print(rec_dict['shrimp etouffee'].cost)
+print()
+print(item_dict['shrimp etouffee'].price('portion'))
+print(item_dict['shrimp etouffee'].price('full pan'))
+print()
+print(rec_dict['zobo'].breakdown)
+print()
+print(16 * item_dict['zobo'].cost('floz'))
+print()
+print(item_dict['zobo'].price('gal'))
+print()
+'''
 
 '''
 print(rec_dict['crab cake'].breakdown)
