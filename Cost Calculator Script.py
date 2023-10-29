@@ -21,13 +21,13 @@ class Ingredient():
         self.each_list = each_list
         self.each = self.each_converter(each_list) 
         
-        
+    '''
     def cost(self, qty=1, target_unit=None):
 
         if target_unit == None:
             ingr_cost = qty * self.unit_cost
         elif target_unit in fc.join(dict_list):
-            if any((u in d for u in [target_unit, self.unit]) for d in dict_list):
+            if any(all(u in d for u in [target_unit, self.unit]) for d in dict_list):
                 ingr_cost = qty * cost_converter(self.unit_cost, self.unit, target_unit)
             elif (target_unit in weight_dict) and (self.unit in vol_dict):
                 ingr_cost = qty * cost_converter( (1 / self.density) * self.unit_cost, 'g', target_unit)
@@ -42,6 +42,40 @@ class Ingredient():
             print('WRONG! ingr cost')
 
         return ingr_cost, target_unit
+        '''
+    
+    def cost(self, qty=1, target_unit=None):
+
+        if target_unit == None:
+
+            ingr_cost = qty * self.unit_cost
+            return ingr_cost, qty, target_unit
+        
+        elif target_unit in fc.join(dict_list):
+
+            if any(all(u in d for u in [target_unit, self.unit]) for d in dict_list):
+                ingr_cost = qty * cost_converter(self.unit_cost, self.unit, target_unit)
+                return ingr_cost, qty, target_unit
+            
+            elif (target_unit in weight_dict) and (self.unit in vol_dict):
+                ingr_cost = qty * cost_converter((1 / self.density) * self.unit_cost, 'g', target_unit)
+                return ingr_cost, qty, target_unit
+            elif (target_unit in vol_dict) and (self.unit in weight_dict):
+                ingr_cost = qty * cost_converter(self.density * self.unit_cost, 'c', target_unit)
+                return ingr_cost, qty, target_unit
+
+            elif ((target_unit in count_dict) and (self.unit not in count_dict)):           
+                ingr_cost = qty * unit_converter(1, target_unit, 'ea') * self.each_cost()
+                return ingr_cost, qty, target_unit
+                                     
+            elif ((target_unit not in count_dict) and (self.unit in count_dict)):
+                ingr_cost = qty * (1 / self.each[target_unit]) * self.unit_cost
+                
+            else:
+                print('watt')
+        else:
+            print(target_unit)
+            print('WRONG! ingr cost')
     
     
     def price(self, qty=1, target_unit=None, scale_factor=3):
@@ -61,33 +95,36 @@ class Ingredient():
     
         if each_list == []:
             each = {}
+            return each
         elif any(each_list[1] in d for d in dict_list):
             for d in dict_list:
                 if each_list[1] in d:
                     each = { k : ( d[k] / d[each_list[1]]  ) * each_list[0] for (k,v) in d.items() }
-                    break
+                    return each
                 else:
                     pass
         else:
             print(each_list[1])
             print('WRONG! ingr each_converter')
-
-        return each
     
-    
-    def each_cost(self, each_unit=None):
+    def each_cost(self):
 
-        if each_unit == None:
-            each_unit = self.each_list[1]
+        each_unit = self.each_list[1]
         
         if self.each != {}:
-            if self.each_list[1] not in count_dict:
-                each_cost = self.each_list[0] * cost_converter(self.unit_cost, self.unit, self.each_list[1])
-                return each_cost, self.each_list[0] * (1 / self.each[each_unit]) * self.each_list[0], each_unit
+            if any(all(u in d for u in [self.unit, each_unit]) for d in [weight_dict, vol_dict]):
+                each_cost = self.each_list[0] * cost_converter(self.unit_cost, self.unit, each_unit)
+                return each_cost
+            elif (self.unit in weight_dict) and (each_unit in vol_dict):
+                each_cost = self.each_list[0] * cost_converter(self.density * self.unit_cost, 'c', each_unit)
+                return each_cost
+            elif (self.unit in vol_dict) and (each_unit in weight_dict):
+                each_cost = self.each_list[0] * cost_converter((1 / self.density) * self.unit_cost, 'g', each_unit)
+                return each_cost
             else:
-                print('ALREADY EACH!!!')
+                print('unit error in,', self.name + '.each_cost()')
         else:
-            print('WRONG! each_cost')
+            print('WRONG! Missing Each error in,', self.name + '.each_cost()')
 
     
 class Recipe():
@@ -103,11 +140,11 @@ class Recipe():
 
         makes_df = rec_df[rec_df[['makes','size']].notnull().all(axis='columns')][['makes','size']]
 
-        for row in makes_df.itertuples(index=False):
-            if (row[1] in size_list) or (row[1] in fc.join(dict_list)):
-                self.makes.update({row[1]:row[0]})
+        for k, row in makes_df.iterrows():
+            if (row['size'] in size_list) or (row['size'] in fc.join(dict_list)):
+                self.makes.update({row['size']:row['makes']})
 
-
+# NEEDS NOT?
     def recipe_converter(self, rec_df):
 
         df = rec_df.copy(deep=True)
@@ -133,30 +170,31 @@ class Recipe():
 
         qty_dict = {}
 
-        for k, row in enumerate(rec_df.itertuples(index=False)):
+        for k, row in rec_df.iterrows():
 
-            ingredient = ingr_dict[rec_df['ingr'][k]]
+            ingredient = ingr_dict[row['ingr']]
             ingr_unit = ingredient.unit
-            rec_unit = rec_df['unit'][k]
+            qty = row['qty']
+            rec_unit = row['unit']
 
             if (rec_unit in weight_dict) and (ingr_unit in weight_dict):
-                qty_dict[ingredient] = [ rec_df['qty'][k], 'g' ]
+                qty_dict[ingredient] = [ qty, 'g' ]
             elif (rec_unit in vol_dict) and (ingr_unit in vol_dict):
-                qty_dict[ingredient] = [ rec_df['qty'][k], 'c' ]
+                qty_dict[ingredient] = [ qty, 'c' ]
             elif (rec_unit in vol_dict) and (ingr_unit in weight_dict) and (ingredient.density != np.pi):
-                qty_dict[ingredient] = [ ingredient.density * rec_df['qty'][k], 'g' ]
+                qty_dict[ingredient] = [ ingredient.density * qty, 'g' ]
             elif (rec_unit in weight_dict) and (ingr_unit in vol_dict) and (ingredient.density != np.pi):
-                qty_dict[ingredient] = [ ( 1 / ingredient.density ) * rec_df['qty'][k], 'c' ]
+                qty_dict[ingredient] = [ ( 1 / ingredient.density ) * qty, 'c' ]
             elif (rec_unit in count_dict) and (ingr_unit in count_dict):
-                qty_dict[ingredient] = [ rec_df['qty'][k], 'ea' ]
+                qty_dict[ingredient] = [ qty, 'ea' ]
             elif (rec_unit in count_dict) and (ingr_unit in vol_dict):
                 if ingredient.each != {}:
-                    qty_dict[ingredient] = [ ingredient.each['c'] * rec_df['qty'][k] , 'c' ]
+                    qty_dict[ingredient] = [ ingredient.each['c'] * qty , 'c' ]
                 else:
                     print('NO EACH!!!1 in', ingredient.name, 'no volume unit in each')
             elif (rec_unit in count_dict) and (ingr_unit in weight_dict):
                 if ingredient.each != {}:
-                    qty_dict[ingredient] = [ ingredient.each['g'] * rec_df['qty'][k] , 'g' ]
+                    qty_dict[ingredient] = [ ingredient.each['g'] * qty , 'g' ]
                 else:
                     print('NO EACH!!!1 in', ingredient.name, 'no weight unit in each')
             else:
@@ -274,11 +312,15 @@ weight_dict = {'g':1, 'kg':0.001, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.5
 vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 
             'dash':384, 'gal':1/16, 'ga':1/16, 'gallon':1/16, 'bushel':1/128, 'qt':1/4, 'quart':1/4, 'pt':1/2, 'pint':1/2}
 
+base_dict = {'ea':count_dict, 'g':weight_dict, 'c':vol_dict}
+
 size_dict = {'portion':1, 'quarter pan':1/7.5, 'half pan':1/15, 'full pan':1/30}
 
 parts_dict = {'whole':1, 'half':2, 'quarter':4}
 
-size_list = list(size_dict.keys()) + list(parts_dict.keys())
+piece_dict = {'piece':1}
+
+size_list = list(size_dict.keys()) + list(parts_dict.keys()) + list(piece_dict.keys())
 
 size_to_vol_dict = {}
 
@@ -324,6 +366,19 @@ def cost_converter(cost, per_unit, target_unit):
     else:
         print(per_unit)
         print('WRONG! invalid unit for cost conversion')
+
+
+def get_base_unit(unit):
+
+    if unit in fc.join(dict_list):
+        for u in base_dict:
+            if unit in base_dict[u]:
+                base_unit = u
+                return base_unit
+            else:
+                pass
+    else:
+        print('WRONG! Unit not in any global conversion dictionary!')
 
 
 def ingr_df_cleaner(ingr_df):
@@ -432,7 +487,7 @@ def rec_dict_constructor(rec_df_dict):
                     rec_dict_main[name].to_ingr()
 
             except Exception as error:
-                print('WRONG!', error, name, 'recipe not added to recipe dictionary')
+                print('WRONG!', error, 'in rec_dict_constructor();', name, 'recipe not added to recipe dictionary')
                 continue
 
         else:
@@ -460,9 +515,9 @@ def output_template(name, size, scale_factor=3):
     print()
     print(rec_dict[name].breakdown)
     print()
-    print('Recipe cost:', rec_dict[name].cost)
+    print('Recipe cost:', round(rec_dict[name].cost,2))
     print()
-    print('Item cost per', size + ':', item_dict[name].cost(size))
+    print('Item cost per', size + ':', round(item_dict[name].cost(size),2))
     print()
     print('Item price per', size, 'with scale factor of', str(scale_factor) + ':', item_dict[name].price(size, scale_factor))
     print()
@@ -535,8 +590,12 @@ def main():
         print('NO ITEMS!!!1')
     #######################################################
 
-    output_template('crab bisque', 'portion', 2.5)
-        
+    output_template('sweet and sour meatballs', 'portion')
+    print(get_base_unit('lb'))
+    print(unit_converter(1,'gross','ea'))
+    print(ingr_dict['bell pepper, red'].cost(2, 'gross'))
+    print(ingr_dict['bell pepper, red'].each_cost())
+    print(ingr_dict['bell pepper, red'].each['kg'])
 
         
 
@@ -605,29 +664,6 @@ print('Execution time:', end - start)
 print()
 
 
-'''
-print(rec_dict['shrimp etouffee'].breakdown)
-print()
-print(rec_dict['shrimp etouffee'].cost)
-print()
-print(item_dict['shrimp etouffee'].price('portion'))
-print(item_dict['shrimp etouffee'].price('full pan'))
-print()
-print(rec_dict['zobo'].breakdown)
-print()
-print(16 * item_dict['zobo'].cost('floz'))
-print()
-print(item_dict['zobo'].price('gal'))
-print()
-'''
-
-'''
-print(rec_dict['crab cake'].breakdown)
-print(rec_dict['crab cake'].cost)
-print()
-print(item_dict['crab cake'].cost('portion'))
-print(item_dict['crab cake'].price('portion'))
-'''
 
 '''
 print(rec_dict['jerk turkey'].breakdown)
@@ -679,93 +715,3 @@ print(item_dict['hot dog'].price('portion', scale_factor=2.5) *150
         + item_dict['slider'].price('portion', scale_factor=2.5) * 200 )
 '''
 
-
-
-'''
-print(ingr_dict['salmon'].cost(1,'lb'))
-print(ingr_dict['salmon'].each)
-print(ingr_dict['salmon'].each_cost('lb'))
-print(rec_dict['salmon'].makes)
-print(rec_dict['salmon'].breakdown)
-print(item_dict['salmon'].price('portion'))
-'''
-
-'''
-print(rec_dict['jerk chicken'].cost)
-print(rec_dict['jerk chicken'].makes)
-print(Item('jerk chicken', rec_dict['jerk chicken'], ['portion']).price('portion'))
-'''
-
-'''
-print(rec_dict['jerk turkey'].breakdown)
-print(rec_dict['jerk turkey'].cost)
-print(rec_dict['jerk turkey'].makes)
-print(item_dict['jerk turkey'].cost('whole'))
-print(item_dict['jerk turkey'].price('whole'))
-'''
-
-'''
-print(ingr_dict['test_ingr_2'].unit)
-print(ingr_dict['test_ingr_2'].density)
-print(rec_dict['test recipe 1'].breakdown)
-print(rec_dict['test recipe 1'].qty_dict)
-print(rec_dict['test recipe 1'].cost)
-print(Item('test item 1', rec_dict['test recipe 1'], ['portion']).price())
-'''
-
-
-'''
-# Obtener ingredientes y recetas
-
-try:
-    ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
-
-    #ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Test Ingredients'
-
-    ingredients_directory = os.fsencode(ingredients_loc)
-
-    ingr_dfs = []
-
-    for file in os.listdir(ingredients_directory):
-        filename = os.fsdecode(file)
-        df = pd.read_csv(ingredients_loc + '/' + filename)
-        ingr_dfs.append(df)
-    
-    ingr_df = pd.concat(ingr_dfs, ignore_index=True)
-
-    ingr_dict = ingr_dict_constructor(ingr_df)
-
-except Exception as error:
-    print(error)
-    print('NO INGREDIENTS!!!1')
-
-try:
-    recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
-
-    #recipes_loc = 'C:/Users/Paul/Documents/City Chef/Test Recipes'
-
-    recipe_directory = os.fsencode(recipes_loc)
-
-    rec_dict = {}
-
-    for file in os.listdir(recipe_directory):
-        filename = os.fsdecode(file)
-        rec_df = pd.read_csv(recipes_loc + '/' + filename)
-        makes_dict = {}
-        for k in range(rec_df[rec_df[['makes', 'size']].notnull().all(1)][['makes', 'size']].shape[0]):
-            makes_dict[rec_df['size'][k]] = rec_df['makes'][k]
-        rec_df.drop(['makes', 'size'], axis='columns', inplace=True)
-        name = filename.replace('.csv','')
-        rec_dict[name] = Recipe(name, rec_df, makes_dict)
-        if any(s in fc.join(dict_list) for s in list(rec_dict[name].makes.keys())):
-            rec_dict[name].to_ingr()
-
-except Exception as error:
-    print(error)
-    print(traceback.format_exc())
-
-
-###########################################
-item_dict = item_dict_constructor(rec_dict)
-###########################################
-'''
