@@ -53,18 +53,20 @@ class Ingredient():
 
         else:
             print(target_unit)
-            print('WRONG! ingr cost')
+            print('InvalidTargetUnitError in', self.name + '.cost()')
     
     
     def price(self, qty=1, target_unit=None, scale_factor=3):
 
         if target_unit == None:
             ingr_price = scale_factor * qty * self.unit_cost
+
         elif target_unit in fc.join(dict_list):
             ingr_price = scale_factor * qty * self.cost(target_unit)
+
         else:
             print(target_unit)
-            print('WRONG! ingr price')
+            print('InvalidTargetUnitError in', self.name + 'ingr.price()')
 
         return ingr_price
 
@@ -92,9 +94,9 @@ class Ingredient():
                         converted_each_qty = unit_converter(each_qty_in_c, 'c', target_unit)
                         return converted_each_qty
                 else:
-                    print('NoDensityError in ingr.each_converter()')
+                    print('NoDensityError in', self.name + '.each_converter()')
         else:
-            print('NoEachError in ingr.each_converter()')
+            print('NoEachError in', self.name + '.each_converter()')
  
     
     def each_cost(self):
@@ -112,9 +114,9 @@ class Ingredient():
                 each_cost = self.each_list[0] * cost_converter((1 / self.density) * self.unit_cost, 'g', each_unit)
                 return each_cost
             else:
-                print('unit error in,', self.name + '.each_cost()')
+                print('UnitConversionError in,', self.name + '.each_cost()')
         else:
-            print('WRONG! Missing Each error in,', self.name + '.each_cost()')
+            print('NoEachError in,', self.name + '.each_cost()')
 
     
 class Recipe():
@@ -185,7 +187,7 @@ class Recipe():
             ingr_dict.update({self.name : Ingredient(self.name, unit_cost, ingr_unit, density, each_list)})
 
         else:
-            print('WRONG! cannot to_ingr without volume, weight, or count yield')
+            print('NoYieldError in', self.name + '.to_ingr()')
 
 
     def breakdown(self):
@@ -227,7 +229,7 @@ class Item():
                 return item_cost
             else:
                 print(size)
-                print('WRONG! no serving size in recipe')
+                print('ConversionError in', self.name + '.cost(): No serving size in recipe.')
         elif size in vol_dict:
             if any(k in vol_dict for k in self.recipe.makes):
                 yield_dict = {k:self.recipe.makes[k] for k in [unit for unit in self.recipe.makes if unit in vol_dict]}
@@ -238,7 +240,7 @@ class Item():
                 return item_cost
             else:
                 print(size)
-                print('WRONG! no volumetric yield in recipe')
+                print('ConversionError in', self.name + '.cost(): No volumetric yield in recipe.')
         elif size in weight_dict:
             if any(k in weight_dict for k in self.recipe.makes):
                 yield_dict = {k:self.recipe.makes[k] for k in [unit for unit in self.recipe.makes if unit in weight_dict]}
@@ -249,10 +251,10 @@ class Item():
                 return item_cost
             else:
                 print(size)
-                print('WRONG! no mass yield in recipe')        
+                print('ConversionError in', self.name + '.cost(): No mass yield in recipe.')       
         else:
             print(size)
-            print('WRONG! invalid size for item cost computation')     
+            print('InvalidTargetUnitError in', self.name + '.cost()')     
 
 
     def price(self, size='portion', scale_factor=3):
@@ -297,7 +299,7 @@ ingr_dict, rec_dict, item_dict = {}, {}, {}
 
 def unit_converter(qty, given_unit, target_unit):
     
-    if any(given_unit and target_unit in d for d in big_dict_list): 
+    if any(all(u in d for u in [given_unit, target_unit]) for d in big_dict_list): 
         
         for d in big_dict_list:
             
@@ -309,12 +311,12 @@ def unit_converter(qty, given_unit, target_unit):
 
     else:
         print(given_unit)
-        print('WRONG! invalid unit for conversion')
+        print('InvalidUnitError in unit_converter()')
 
 
 def cost_converter(cost, per_unit, target_unit):
     
-    if any(per_unit and target_unit in d for d in dict_list): 
+    if any(all(u in d for u in [per_unit, target_unit]) for d in dict_list):
         
         for d in dict_list:
             if per_unit in d:
@@ -325,7 +327,7 @@ def cost_converter(cost, per_unit, target_unit):
         
     else:
         print(per_unit)
-        print('WRONG! invalid unit for cost conversion')
+        print('InvalidUnitError in cost_converter()')
 
 
 def get_base_unit(unit):
@@ -338,7 +340,7 @@ def get_base_unit(unit):
             else:
                 pass
     else:
-        print('WRONG! Unit not in any global conversion dictionary!')
+        print('InvalidUnitError in get_base_unit(): Input unit not contained in any global conversion dictionary.')
 
 
 def ingr_df_cleaner(ingr_df):
@@ -398,7 +400,8 @@ def ingr_dict_constructor(ingr_df):
                     pass
                                   
         else:
-            print('WRONG!', df['name'][j], 'not added to ingredient dictionary')
+            print('InvalidUnitError in ingr_dict_constructor():', df['name'][j], 
+                  "not added to ingredient dictionary due to invalid unit '" + df['unit'][j] + "'")
             print()
     
     return ingr_dict
@@ -443,14 +446,16 @@ def rec_dict_constructor(rec_df_dict):
                     rec_dict_main[name].to_ingr()
 
             except Exception as error:
-                print('WRONG!', error, 'in rec_dict_constructor();', name, 'recipe not added to recipe dictionary')
+                print('Error in rec_dict_constructor():', error)
+                print(name, 'recipe not added to recipe dictionary')
                 continue
 
         else:
             ingr_errors = list(rec_df[~rec_df['ingr'].isin(list(ingr_dict.keys()))]['ingr'])
-            print('WRONG! Ingredient Error in ' + name + ':', ingr_errors)
             print()
+            print('IngredientError in', name + ':', ingr_errors)
             print(name, 'recipe not added to recipe dictionary')
+            print()
 
     return rec_dict_main
 
@@ -506,6 +511,8 @@ def main():
     except Exception as error:
         print(error)
         print('NO INGREDIENTS!!!1')
+        print('Better luck next time')
+        exit()
 
     try:
 
@@ -536,6 +543,8 @@ def main():
         print(error)
         print(traceback.format_exc())
         print('NO RECIPES!!!1')
+        print('Better luck next time')
+        exit()
 
     #######################################################
     try:
@@ -545,6 +554,10 @@ def main():
         print(traceback.format_exc())
         print('NO ITEMS!!!1')
     #######################################################
+
+    output_template('buffalo drumettes', 'piece', 3)
+
+    output_template('jerk drumettes', 'piece', 3)
 
         
 
