@@ -164,28 +164,18 @@ class Recipe():
     def to_ingr(self, density=np.pi, each_list=[]):
 
         if any(s in fc.join(dict_list) for s in list(self.makes.keys())):
+            
             for s in list(self.makes.keys()):
-                if s in weight_dict:
-                    yield_unit = s
-                    ingr_unit = 'g'
-                    converted_yield = unit_converter(self.makes[s], yield_unit, ingr_unit)
-                    unit_cost = (1 / converted_yield) * cost_converter(self.cost, yield_unit, ingr_unit)
-                    break
-                elif s in vol_dict:
-                    yield_unit = s
-                    ingr_unit = 'c'
-                    converted_yield = unit_converter(self.makes[s], yield_unit, ingr_unit)
-                    unit_cost = (1 / converted_yield) * cost_converter(self.cost, yield_unit, ingr_unit)
-                    break
-                elif s in count_dict:
-                    yield_unit = s
-                    ingr_unit = 'ea'
-                    converted_yield = unit_converter(self.makes[s], yield_unit, ingr_unit)
-                    unit_cost = (1 / converted_yield) * cost_converter(self.cost, yield_unit, ingr_unit)
-                else:
-                    pass
-            ingr_dict.update({self.name : Ingredient(self.name, unit_cost, ingr_unit, density, each_list)})
-
+                yield_qty = self.makes[s]
+                yield_unit = s
+                for d in dict_list:
+                    if yield_unit in d:
+                        ingr_unit = get_base_unit(d)
+                        given_unit_cost = self.cost / yield_qty
+                        unit_cost = cost_converter(given_unit_cost, yield_unit, ingr_unit)
+                        ingr_dict.update({self.name : Ingredient(self.name, unit_cost, ingr_unit, density, each_list)})
+                        return
+                  
         else:
             print('NoYieldError in', self.name + '.to_ingr()')
 
@@ -271,7 +261,7 @@ count_dict = {'ea':1, 'each':1, 'dozen':1/12, 'doz':1/12, 'dz':1/12, 'score':1/2
 
 weight_dict = {'g':1, 'kg':0.001, 'lb':1/453.592, 'lbm':1/453.592, 'lbs':1/453.592, 'oz':1/28.3495}
 
-vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 
+vol_dict = {'c':1, 'cup':1, 'L':0.2365882365, 'ml':236.5882365, 'mL':236.5882365, 'floz':8, 'tbsp':16, 'tsp':48, 'pinch':768,
             'dash':384, 'gal':1/16, 'ga':1/16, 'gallon':1/16, 'bushel':1/128, 'qt':1/4, 'quart':1/4, 'pt':1/2, 'pint':1/2}
 
 base_dict = {'ea':count_dict, 'g':weight_dict, 'c':vol_dict}
@@ -330,17 +320,29 @@ def cost_converter(cost, per_unit, target_unit):
         print('InvalidUnitError in cost_converter()')
 
 
-def get_base_unit(unit):
+def get_base_unit(unit_or_dict):
 
-    if unit in fc.join(dict_list):
-        for u in base_dict:
-            if unit in base_dict[u]:
-                base_unit = u
-                return base_unit
-            else:
-                pass
-    else:
-        print('InvalidUnitError in get_base_unit(): Input unit not contained in any global conversion dictionary.')
+    if type(unit_or_dict) == str:
+        unit = unit_or_dict
+        if unit in fc.join(dict_list):
+            for base_unit in base_dict:
+                if unit in base_dict[base_unit]:
+                    return base_unit
+                else:
+                    pass
+        else:
+            print('InvalidUnitError in get_base_unit(): Input unit not contained in any global conversion dictionary.')
+
+    elif type(unit_or_dict) == dict:
+        dictionary = unit_or_dict
+        if dictionary in dict_list:
+            for base_unit in base_dict:
+                if dictionary == base_dict[base_unit]:
+                    return base_unit
+                else:
+                    pass
+        else:
+            print('InvalidInputError in get_base_unit(): Input conversion dictionary must be vol_dict, weight_dict, or count_dict.')
 
 
 def ingr_df_cleaner(ingr_df):
@@ -447,6 +449,7 @@ def rec_dict_constructor(rec_df_dict):
 
             except Exception as error:
                 print('Error in rec_dict_constructor():', error)
+                print(traceback.format_exc())
                 print(name, 'recipe not added to recipe dictionary')
                 continue
 
@@ -555,13 +558,13 @@ def main():
         print('NO ITEMS!!!1')
     #######################################################
 
-    output_template('buffalo drumettes', 'piece', 3)
+    print(ingr_dict['mac n cheese sauce'].cost(1, 'gal'))
+    output_template('mac n cheese sauce', 'gal')
+    print(rec_dict['mac n cheese sauce'].cost)
+    output_template('mac n cheese', 'half pan', 3)
 
-    output_template('jerk drumettes', 'piece', 3)
 
-        
-
-#TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+#TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 def test():
 
     try:
@@ -620,7 +623,7 @@ def test():
     print(ingr_dict['test_ingr_3'].each_converter('g'))
     print(ingr_dict['test_ingr_3'].cost(1,'g'))
     print(output_template('test recipe 1'))
-#TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+#TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 
 
 start = time()
