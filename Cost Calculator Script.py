@@ -556,12 +556,8 @@ def main():
         print(error)
         print(traceback.format_exc())
         print('NO ITEMS!!!1')
-    #######################################################
+    ########################################################
 
-    print(ingr_dict['mac n cheese sauce'].cost(1, 'gal'))
-    output_template('mac n cheese sauce', 'gal')
-    print(rec_dict['mac n cheese sauce'].cost)
-    output_template('mac n cheese', 'half pan', 3)
 
 
 #TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
@@ -637,7 +633,12 @@ print()
 print('Execution time:', end - start)
 print()
 
-
+'''
+print(ingr_dict['mac n cheese sauce'].cost(1, 'gal'))
+output_template('mac n cheese sauce', 'gal')
+print(rec_dict['mac n cheese sauce'].cost)
+output_template('mac n cheese', 'half pan', 3)
+'''
 
 '''
 print(rec_dict['jerk turkey'].breakdown)
