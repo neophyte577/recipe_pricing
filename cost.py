@@ -28,9 +28,9 @@ class Ingredient():
             ingr_cost = qty * self.unit_cost
             return ingr_cost, qty, target_unit
         
-        elif target_unit in fc.join(dict_list):
+        elif target_unit in fc.join(unit_dict_list):
 
-            if any(all(u in d for u in [target_unit, self.unit]) for d in dict_list):
+            if any(all(u in d for u in [target_unit, self.unit]) for d in unit_dict_list):
                 ingr_cost = qty * cost_converter(self.unit_cost, self.unit, target_unit)
                 return ingr_cost, qty, target_unit
             
@@ -61,7 +61,7 @@ class Ingredient():
         if target_unit == None:
             ingr_price = scale_factor * qty * self.unit_cost
 
-        elif target_unit in fc.join(dict_list):
+        elif target_unit in fc.join(unit_dict_list):
             ingr_price = scale_factor * qty * self.cost(target_unit)
 
         else:
@@ -130,7 +130,7 @@ class Recipe():
         makes_df = rec_df[rec_df[['makes','size']].notnull().all(axis='columns')][['makes','size']]
 
         for k, row in makes_df.iterrows():
-            if (row['size'] in size_list) or (row['size'] in fc.join(dict_list)):
+            if (row['size'] in size_list) or (row['size'] in fc.join(unit_dict_list)):
                 self.makes.update({row['size']:row['makes']})
 
 
@@ -163,12 +163,12 @@ class Recipe():
 
     def to_ingr(self, density=np.pi, each_list=[]):
 
-        if any(s in fc.join(dict_list) for s in list(self.makes.keys())):
+        if any(s in fc.join(unit_dict_list) for s in list(self.makes.keys())):
             
             for s in list(self.makes.keys()):
                 yield_qty = self.makes[s]
                 yield_unit = s
-                for d in dict_list:
+                for d in unit_dict_list:
                     if yield_unit in d:
                         ingr_unit = get_base_unit(d)
                         given_unit_cost = self.cost / yield_qty
@@ -278,9 +278,9 @@ size_to_vol_dict = {}
 
 vol_dict.update(size_to_vol_dict)
 
-dict_list = [count_dict, weight_dict, vol_dict]
+unit_dict_list = [count_dict, weight_dict, vol_dict]
 
-big_dict_list = dict_list + [size_dict]
+big_unit_dict_list = unit_dict_list + [size_dict]
 
 ingr_dict, rec_dict, item_dict = {}, {}, {}
 
@@ -289,9 +289,9 @@ ingr_dict, rec_dict, item_dict = {}, {}, {}
 
 def unit_converter(qty, given_unit, target_unit):
     
-    if any(all(u in d for u in [given_unit, target_unit]) for d in big_dict_list): 
+    if any(all(u in d for u in [given_unit, target_unit]) for d in big_unit_dict_list): 
         
-        for d in big_dict_list:
+        for d in big_unit_dict_list:
             
             if given_unit in d:
                 converted_qty = ( d[target_unit] / d[given_unit] ) * qty
@@ -306,9 +306,9 @@ def unit_converter(qty, given_unit, target_unit):
 
 def cost_converter(cost, per_unit, target_unit):
     
-    if any(all(u in d for u in [per_unit, target_unit]) for d in dict_list):
+    if any(all(u in d for u in [per_unit, target_unit]) for d in unit_dict_list):
         
-        for d in dict_list:
+        for d in unit_dict_list:
             if per_unit in d:
                 converted_cost = ( d[per_unit] / d[target_unit] ) * cost
                 return converted_cost
@@ -324,7 +324,7 @@ def get_base_unit(unit_or_dict):
 
     if type(unit_or_dict) == str:
         unit = unit_or_dict
-        if unit in fc.join(dict_list):
+        if unit in fc.join(unit_dict_list):
             for base_unit in base_dict:
                 if unit in base_dict[base_unit]:
                     return base_unit
@@ -335,7 +335,7 @@ def get_base_unit(unit_or_dict):
 
     elif type(unit_or_dict) == dict:
         dictionary = unit_or_dict
-        if dictionary in dict_list:
+        if dictionary in unit_dict_list:
             for base_unit in base_dict:
                 if dictionary == base_dict[base_unit]:
                     return base_unit
@@ -376,9 +376,9 @@ def ingr_dict_constructor(ingr_df):
     
     for j, given_unit in df['unit'].items():
 
-        if given_unit in fc.join(dict_list):
+        if given_unit in fc.join(unit_dict_list):
 
-            for d in dict_list:
+            for d in unit_dict_list:
 
                 if given_unit in d:
 
@@ -419,17 +419,22 @@ def get_recipes(recipes_loc):
 
         filename = os.fsdecode(file)
         
-        try:
-            rec_df = pd.read_csv(recipes_loc + '/' + filename)
+        if filename.endswith('csv'):
 
-        except Exception as error:
-            print(error, 'in', filename)
-            print(filename.partition('.')[0], 'recipe not added to recipe dictionary')
-            continue
+            try:
+                rec_df = pd.read_csv(recipes_loc + '/' + filename)
 
-        name = filename.replace('.csv','')
+            except Exception as error:
+                print(error, 'in', filename)
+                print(filename.partition('.')[0], 'recipe not added to recipe dictionary')
+                continue
 
-        rec_df_dict.update({name : rec_df})
+            name = filename.replace('.csv','')
+
+            rec_df_dict.update({name : rec_df})
+        
+        else:
+            pass
 
     return rec_df_dict
 
@@ -440,25 +445,34 @@ def rec_dict_constructor(rec_df_dict):
 
     for name, rec_df in rec_df_dict.items():
 
-        if rec_df['ingr'].isin(list(ingr_dict.keys())).all():
+        try:
 
-            try:
-                rec_dict_main[name] = Recipe(name.lower(), rec_df)
-                if any(s in fc.join(dict_list) for s in list(rec_dict_main[name].makes.keys())):
-                    rec_dict_main[name].to_ingr()
+            if rec_df['ingr'].isin(list(ingr_dict.keys())).all():
 
-            except Exception as error:
-                print('Error in rec_dict_constructor():', error)
-                print(traceback.format_exc())
+                try:
+                    rec_dict_main[name] = Recipe(name.lower(), rec_df)
+                    if any(s in fc.join(unit_dict_list) for s in list(rec_dict_main[name].makes.keys())):
+                        rec_dict_main[name].to_ingr()
+
+                except Exception as error:
+                    print('Error in rec_dict_constructor():', error)
+                    print(traceback.format_exc())
+                    print(name, 'recipe not added to recipe dictionary')
+                    continue
+
+            else:
+                ingr_errors = list(rec_df[~rec_df['ingr'].isin(list(ingr_dict.keys()))]['ingr'])
+                print()
+                print('IngredientError in', name + ':', ingr_errors)
                 print(name, 'recipe not added to recipe dictionary')
+                print()
                 continue
 
-        else:
-            ingr_errors = list(rec_df[~rec_df['ingr'].isin(list(ingr_dict.keys()))]['ingr'])
-            print()
-            print('IngredientError in', name + ':', ingr_errors)
+        except Exception as error:
+            print('Error in rec_dict_constructor():', error)
+            print(traceback.format_exc())
             print(name, 'recipe not added to recipe dictionary')
-            print()
+            continue
 
     return rec_dict_main
 
@@ -558,6 +572,9 @@ def main():
         print('NO ITEMS!!!1')
     ########################################################
 
+    output_template('cajun salmon')
+
+    
 
 
 #TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
@@ -632,6 +649,11 @@ end = time()
 print()
 print('Execution time:', end - start)
 print()
+
+
+
+
+
 
 '''
 print(ingr_dict['mac n cheese sauce'].cost(1, 'gal'))
