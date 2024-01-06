@@ -490,6 +490,8 @@ def item_dict_constructor(rec_dict):
 
 def output_template(name, size='portion', scale_factor=3):
 
+    output = '\n' + str(rec_dict[name].breakdown()) + '\n\n' + 'Recipe cost: ' + str(round(rec_dict[name].cost,2)) + '\n\n' + 'Item cost per ' + size + ': ' + str(round(item_dict[name].cost(size),2)) + '\n\n' + 'Item price per ' + size +  ' with scale factor of ' + str(scale_factor) + ': ' + str(item_dict[name].price(size, scale_factor))
+
     print()
     print(rec_dict[name].breakdown())
     print()
@@ -501,6 +503,10 @@ def output_template(name, size='portion', scale_factor=3):
     print()
     print('---------------------')
     print()
+
+    print(output)
+
+    return output
 
 
 def main():
@@ -644,10 +650,10 @@ start = time()
 if __name__ == '__main__':
     main()
 
-end = time()
+stop = time()
 
 print()
-print('Execution time:', end - start)
+print('Execution time:', stop - start)
 print()
 
 
