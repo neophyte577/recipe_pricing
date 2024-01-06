@@ -1,7 +1,37 @@
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QComboBox, QPushButton, QVBoxLayout, QLabel
+from string import capwords
 import cost
+
+
+class OutputWindow(QMainWindow):
+
+    def __init__(self, recipe, size, scale_factor):
+
+        super().__init__()
+
+        self.setWindowTitle(capwords(recipe.name))
+        self.setFixedSize(300,300)
+
+        layout = QVBoxLayout()        
+
+        self.output_label = QLabel(cost.output_template(recipe.name, size, scale_factor))
+        self.output_label.setAlignment(Qt.AlignLeft)
+
+        self.close_button = QPushButton('Bet')
+        self.close_button.clicked.connect(self.closeWindow)
+
+        layout.addWidget(self.output_label)
+        layout.addWidget(self.close_button)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def closeWindow(self):
+
+        self.close()
 
 
 class MainWindow(QMainWindow):
@@ -43,12 +73,17 @@ class MainWindow(QMainWindow):
         self.set_scale_factor.setEditable(True)
         self.set_scale_factor.setInsertPolicy(QComboBox.InsertAlphabetically)
 
+        self.display_output_button = QPushButton('Vamanos')
+        self.display_output_button.setFixedSize(100,25)
+        self.display_output_button.pressed.connect(self.display_button_pressed)
+
         layout.addWidget(self.recipe_label)
         layout.addWidget(self.recipe_selector)
         layout.addWidget(self.size_label)
         layout.addWidget(self.size_selector)
         layout.addWidget(self.factor_label)
         layout.addWidget(self.set_scale_factor)
+        layout.addWidget(self.display_output_button)
         layout.addStretch()
 
         widget = QWidget()
@@ -77,6 +112,18 @@ class MainWindow(QMainWindow):
         factor_selection = self.set_scale_factor.currentText()
         
         return factor_selection
+    
+    def display_button_pressed(self):
+
+        recipe = self.rec_dict[self.recipe_selector.currentText()]
+
+        size = self.size_selector.currentText()
+
+        scale_factor = int(self.set_scale_factor.currentText())
+
+        self.output = OutputWindow(recipe, size, scale_factor)
+
+        self.output.show()
     
 
 def main():
