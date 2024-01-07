@@ -1,5 +1,6 @@
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QComboBox, QPushButton, QVBoxLayout, QLabel
 from string import capwords
 import cost
@@ -11,12 +12,14 @@ class OutputWindow(QMainWindow):
 
         super().__init__()
 
-        self.setWindowTitle(capwords(recipe.name))
-        self.setFixedSize(300,300)
+        self.setWindowTitle(capwords(recipe.name) + ' Breakdown')
+        
+        font = QFont('Courier New')
 
         layout = QVBoxLayout()        
 
         self.output_label = QLabel(cost.output_template(recipe.name, size, scale_factor))
+        self.output_label.setFont(font)
         self.output_label.setAlignment(Qt.AlignLeft)
 
         self.close_button = QPushButton('Bet')
@@ -24,6 +27,7 @@ class OutputWindow(QMainWindow):
 
         layout.addWidget(self.output_label)
         layout.addWidget(self.close_button)
+        layout.setContentsMargins(15,0,15,15)
 
         widget = QWidget()
         widget.setLayout(layout)
@@ -40,8 +44,8 @@ class MainWindow(QMainWindow):
 
         super().__init__()
 
-        self.setWindowTitle('Get Cost and Pricing Info')
-        self.setFixedSize(350,350)
+        self.setWindowTitle('Price Which?')
+        self.setFixedSize(250,200)
         self.rec_dict = rec_dict
 
         layout = QVBoxLayout()
@@ -67,7 +71,7 @@ class MainWindow(QMainWindow):
         self.factor_label.setAlignment(Qt.AlignLeft)
 
         self.set_scale_factor = QComboBox()
-        self.set_scale_factor.addItems(['1','2','3'])
+        self.set_scale_factor.addItems(['3','2.5','2'])
         self.set_scale_factor.setFixedSize(50,25)
         self.set_scale_factor.activated.connect(self.current_scale_factor)
         self.set_scale_factor.setEditable(True)
@@ -83,8 +87,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.size_selector)
         layout.addWidget(self.factor_label)
         layout.addWidget(self.set_scale_factor)
-        layout.addWidget(self.display_output_button)
+        layout.addWidget(self.display_output_button, alignment=Qt.AlignCenter)
         layout.addStretch()
+        layout.setContentsMargins(10,10,10,10)
 
         widget = QWidget()
         widget.setLayout(layout)
