@@ -38,7 +38,7 @@ class OutputWindow(QMainWindow):
         self.close()
 
 
-class MainWindow(QMainWindow):
+class SelectionWindow(QMainWindow):
 
     def __init__(self, rec_dict):
 
@@ -56,24 +56,20 @@ class MainWindow(QMainWindow):
         self.recipe_selector = QComboBox()
         self.recipe_selector.addItems(rec_dict.keys())
         self.recipe_selector.setFixedSize(200,25)
-        self.recipe_selector.activated.connect(self.current_recipe_selection)
         self.recipe_selector.currentIndexChanged.connect(self.update_sizes)
 
         self.size_label = QLabel('Select a size:')
         self.size_label.setAlignment(Qt.AlignLeft)
 
         self.size_selector = QComboBox()
-        self.size_selector.addItems(rec_dict[self.current_recipe_selection()].makes.keys())
+        self.size_selector.addItems(rec_dict[self.recipe_selector.currentText()].makes.keys())
         self.size_selector.setFixedSize(200,25)
-        self.size_selector.activated.connect(self.current_size_selection)
-
         self.factor_label = QLabel('Set margin by scale factor:')
         self.factor_label.setAlignment(Qt.AlignLeft)
 
         self.set_scale_factor = QComboBox()
         self.set_scale_factor.addItems(['3','2.5','2'])
         self.set_scale_factor.setFixedSize(50,25)
-        self.set_scale_factor.activated.connect(self.current_scale_factor)
         self.set_scale_factor.setEditable(True)
         self.set_scale_factor.setInsertPolicy(QComboBox.InsertAlphabetically)
 
@@ -95,28 +91,10 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
     
-    def current_recipe_selection(self, _=0):
-        
-        recipe_selection = self.recipe_selector.currentText()
-
-        return recipe_selection
-    
     def update_sizes(self, _):
 
         self.size_selector.clear()
-        self.size_selector.addItems(self.rec_dict[self.current_recipe_selection()].makes.keys())
-
-    def current_size_selection(self, _):
-        
-        size_selection = self.size_selector.currentText()
-
-        return size_selection
-
-    def current_scale_factor(self, _):
-        
-        factor_selection = self.set_scale_factor.currentText()
-        
-        return factor_selection
+        self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText()].makes.keys())
     
     def display_button_pressed(self):
 
@@ -133,17 +111,17 @@ class MainWindow(QMainWindow):
 
 def main():
 
-    cost.main()
+    #cost.main()
 
     rec_dict = cost.rec_dict
 
-    app = QApplication()
+    #app = QApplication()
 
-    window = MainWindow(rec_dict)
+    window = SelectionWindow(rec_dict)
 
     window.show()
 
-    app.exec()
+    #app.exec()
 
 
 if __name__ == '__main__':
