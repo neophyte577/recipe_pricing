@@ -1,7 +1,7 @@
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QScrollArea
 import cost
 import output_window
 
@@ -61,7 +61,7 @@ class AddRecipeWindow(QMainWindow):
         self.combined_input_widget = QWidget()
         self.addition_button_row = QWidget()
         self.main_button_row = QWidget()
-        central_container_widget = QWidget()
+        self.central_container_widget = QWidget()
 
         # Ingredient Column
 
@@ -72,17 +72,27 @@ class AddRecipeWindow(QMainWindow):
     
         self.ingredient_header.setLayout(ingredient_header_layout)
 
-        self.ingredient_input_row = IngredientInputRow()
-
         plus_icon = QIcon('plus-button.png')
         self.add_ingr_row_button = QPushButton('Add Another Ingredient')
         self.add_ingr_row_button.setIcon(plus_icon)
         self.add_ingr_row_button.setFixedWidth(160)
-        #self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
+        self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
 
         ingredient_layout = QVBoxLayout()
+        self.ingredient_input_layout = QVBoxLayout()
+        self.ingredient_input_container_widget = QWidget()
+        self.ingredient_input_container_widget.setLayout(self.ingredient_input_layout)
+        for k in range(10):
+            self.ingredient_input_layout.addWidget(IngredientInputRow())
+        self.ingredient_input_layout.addStretch()
+
+        self.ingredient_scroll_area = QScrollArea()
+        self.ingredient_scroll_area.setWidget(self.ingredient_input_container_widget)
+        self.ingredient_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.ingredient_scroll_area.setWidgetResizable(True)
+
         ingredient_layout.addWidget(self.ingredient_header)
-        ingredient_layout.addWidget(self.ingredient_input_row)
+        ingredient_layout.addWidget(self.ingredient_scroll_area)
         ingredient_layout.addWidget(self.add_ingr_row_button)
         self.ingredient_input_widget.setLayout(ingredient_layout)
 
@@ -94,16 +104,26 @@ class AddRecipeWindow(QMainWindow):
 
         self.yield_header.setLayout(yield_header_layout)
 
-        self.yield_input_row = YieldInputRow()
-
         self.add_yield_row_button = QPushButton('Add Another Yield')
         self.add_yield_row_button.setIcon(plus_icon)
         self.add_yield_row_button.setFixedWidth(130)
-        #self.add_yield_row_button.clicked.connect(self.add_yield_input_row)
+        self.add_yield_row_button.clicked.connect(self.add_yield_input_row)
 
         yield_layout = QVBoxLayout()
+        self.yield_input_layout = QVBoxLayout()
+        self.yield_input_container_widget = QWidget()
+        self.yield_input_container_widget.setLayout(self.yield_input_layout)
+        for k in range(3):
+            self.yield_input_layout.addWidget(YieldInputRow())
+        self.yield_input_layout.addStretch()
+
+        self.yield_scroll_area = QScrollArea()
+        self.yield_scroll_area.setWidget(self.yield_input_container_widget)
+        self.yield_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.yield_scroll_area.setWidgetResizable(True)
+
         yield_layout.addWidget(self.yield_header)
-        yield_layout.addWidget(self.yield_input_row)
+        yield_layout.addWidget(self.yield_scroll_area)
         yield_layout.addWidget(self.add_yield_row_button)
         self.yield_input_widget.setLayout(yield_layout)
 
@@ -136,13 +156,18 @@ class AddRecipeWindow(QMainWindow):
         central_layout.addWidget(self.addition_button_row)
         central_layout.addWidget(self.main_button_row)
 
-        central_container_widget = QWidget()
-        central_container_widget.setLayout(central_layout)
-        self.setCentralWidget(central_container_widget)
+        self.central_container_widget.setLayout(central_layout)
+        self.setCentralWidget(self.central_container_widget)
 
 
-    #def add_ingr_input_row(self):
+    def add_ingredient_input_row(self):
 
+        self.ingredient_input_layout.addWidget(IngredientInputRow())
+        
+
+    def add_yield_input_row(self):
+
+        self.yield_input_layout.addWidget(YieldInputRow())
 
     def add_recipe(self):
 
