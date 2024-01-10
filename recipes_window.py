@@ -1,6 +1,6 @@
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap 
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout
 import cost
 import output_window
@@ -59,7 +59,8 @@ class AddRecipeWindow(QMainWindow):
         self.ingredient_input_widget = QWidget()
         self.yield_input_widget = QWidget()
         self.combined_input_widget = QWidget()
-        self.button_row = QWidget()
+        self.addition_button_row = QWidget()
+        self.main_button_row = QWidget()
         central_container_widget = QWidget()
 
         # Ingredient Column
@@ -73,10 +74,16 @@ class AddRecipeWindow(QMainWindow):
 
         self.ingredient_input_row = IngredientInputRow()
 
+        plus_icon = QIcon('plus-button.png')
+        self.add_ingr_row_button = QPushButton('Add Another Ingredient')
+        self.add_ingr_row_button.setIcon(plus_icon)
+        self.add_ingr_row_button.setFixedWidth(160)
+        #self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
+
         ingredient_layout = QVBoxLayout()
         ingredient_layout.addWidget(self.ingredient_header)
         ingredient_layout.addWidget(self.ingredient_input_row)
-
+        ingredient_layout.addWidget(self.add_ingr_row_button)
         self.ingredient_input_widget.setLayout(ingredient_layout)
 
         # Yield Column
@@ -89,10 +96,15 @@ class AddRecipeWindow(QMainWindow):
 
         self.yield_input_row = YieldInputRow()
 
+        self.add_yield_row_button = QPushButton('Add Another Yield')
+        self.add_yield_row_button.setIcon(plus_icon)
+        self.add_yield_row_button.setFixedWidth(130)
+        #self.add_yield_row_button.clicked.connect(self.add_yield_input_row)
+
         yield_layout = QVBoxLayout()
         yield_layout.addWidget(self.yield_header)
         yield_layout.addWidget(self.yield_input_row)
-
+        yield_layout.addWidget(self.add_yield_row_button)
         self.yield_input_widget.setLayout(yield_layout)
 
         # Combined Header & Input Row
@@ -100,38 +112,41 @@ class AddRecipeWindow(QMainWindow):
         combined_input_layout = QHBoxLayout()
         combined_input_layout.addWidget(self.ingredient_input_widget)
         combined_input_layout.addWidget(self.yield_input_widget)
-
         self.combined_input_widget.setLayout(combined_input_layout)
 
-        # Button Row
+        # Main Button Row
 
-        button_row_layout = QHBoxLayout()
+        main_button_layout = QHBoxLayout()
 
         self.add_ingr_button = QPushButton('Add Recipe')
-        self.add_ingr_button.clicked.connect(self.add_ingredient)
+        self.add_ingr_button.clicked.connect(self.add_recipe)
 
         self.close_button = QPushButton('Adios')
         self.close_button.clicked.connect(self.close_window)
 
-        button_row_layout.addWidget(self.add_ingr_button)
-        button_row_layout.addWidget(self.close_button)
-
-        self.button_row.setLayout(button_row_layout)
+        main_button_layout.addWidget(self.add_ingr_button)
+        main_button_layout.addWidget(self.close_button)
+        self.main_button_row.setLayout(main_button_layout)
 
         # Central Widget
 
         central_layout = QVBoxLayout()
 
         central_layout.addWidget(self.combined_input_widget)
-        central_layout.addWidget(self.button_row)
+        central_layout.addWidget(self.addition_button_row)
+        central_layout.addWidget(self.main_button_row)
 
         central_container_widget = QWidget()
         central_container_widget.setLayout(central_layout)
         self.setCentralWidget(central_container_widget)
 
-    def add_ingredient(self):
 
-        for edit in self.input_row.edits:
+    #def add_ingr_input_row(self):
+
+
+    def add_recipe(self):
+
+        for edit in self.ingredient_input_row.edits + self.yield_input_row.edits:
             edit.clear()
 
     def close_window(self):
@@ -146,7 +161,7 @@ class NavigationWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Recipes')
-        self.setFixedSize(300,120)
+        self.setFixedSize(275,120)
 
         hlayout = QHBoxLayout()
 
@@ -155,7 +170,7 @@ class NavigationWindow(QMainWindow):
         self.add_recipe_button = QPushButton('Add Recipe')
         self.add_recipe_button.clicked.connect(self.generate_add_recipe_window)
 
-        self.modify_recipe_button = QPushButton('Modify Recipe')
+        self.modify_recipe_button = QPushButton('Edit Recipe')
         #self.add_recipe_button.clicked.connect(self.generate_update_rec_window)
 
         self.price_recipe_button = QPushButton('Price Recipe')
