@@ -1,7 +1,8 @@
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QScrollArea, QSizePolicy
+from PySide6.QtGui import QPixmap, QIcon, QDoubleValidator
+from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLabel, QCompleter, QComboBox, QLineEdit, QPushButton, QVBoxLayout, 
+                               QHBoxLayout, QScrollArea, QSizePolicy)
 import cost
 import output_window
 
@@ -15,8 +16,19 @@ class IngredientInputRow(QWidget):
         self.layout = QHBoxLayout()
 
         self.ingr_name_field = QLineEdit()
+        ingredients_list = cost.ingr_dict.keys()
+        ingredient_completer = QCompleter(ingredients_list)
+        self.ingr_name_field.setCompleter(ingredient_completer)
+
         self.qty_field = QLineEdit()
-        self.unit_field = QLineEdit()
+        self.qty_field.setValidator(QDoubleValidator())
+
+        self.unit_field = QComboBox()
+        self.unit_field.addItems(cost.unit_list)
+        self.unit_field.setEditable(True)
+        unit_completer = QCompleter(cost.unit_list)
+        self.unit_field.setCompleter(unit_completer)
+        self.unit_field.setCurrentIndex(-1)
 
         self.edits = [self.ingr_name_field, self.qty_field, self.unit_field]
 
@@ -36,7 +48,13 @@ class YieldInputRow(QWidget):
         self.layout = QHBoxLayout()
 
         self.makes_field = QLineEdit()
-        self.size_field = QLineEdit()
+        self.makes_field.setValidator(QDoubleValidator())
+
+        self.size_field = QComboBox()
+        self.size_field.addItems(cost.size_list)
+        self.size_field.setEditable(True)
+        self.size_field.setCompleter(QCompleter(cost.size_list))
+        self.size_field.setCurrentIndex(-1)
 
         self.edits = [self.makes_field, self.size_field]
 
@@ -180,19 +198,7 @@ class AddRecipeWindow(QMainWindow):
             self.yield_input_layout.itemAt(self.yield_insertion_index+1).widget().setParent(None)
             self.yield_insertion_index += 1
         else:
-            self.yield_input_layout.insertWidget(self.yield_insertion_index, YieldInputRow())
-
-        '''
-        layout_length = 0
-        for widget in self.yield_scroll_area.children():  
-            if isinstance(widget, QLineEdit):
-                layout_length += 1
-        insertion_position = layout_length - 1
-        new_yield_input_row = YieldInputRow()
-        self.yield_scroll_area.setWidget(new_yield_input_row)
-        self.yield_input_layout.insertWidget(insertion_position, new_yield_input_row)
-        '''
-        
+            self.yield_input_layout.insertWidget(self.yield_insertion_index, YieldInputRow())        
 
     def add_recipe(self):
 
