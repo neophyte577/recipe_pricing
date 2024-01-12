@@ -1,6 +1,6 @@
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QDoubleValidator
+from PySide6.QtGui import QPixmap, QDoubleValidator, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLineEdit, QLabel, QComboBox, QCompleter, QPushButton, QVBoxLayout, QHBoxLayout
 import pandas as pd
 import cost
@@ -13,6 +13,7 @@ class AddIngredientWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Add Ingredient')
+        self.setWindowIcon(QIcon('flask--plus.png'))
 
         # Input Fields
 
@@ -136,6 +137,7 @@ class AddIngredientWindow(QMainWindow):
 
         self.central_container_widget = QWidget()
         self.central_container_widget.setLayout(central_layout)
+
         self.setCentralWidget(self.central_container_widget)
 
     def add_ingredient(self):
@@ -155,7 +157,9 @@ class NavigationWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Ingredients')
+        self.setWindowIcon(QIcon('flask.png'))
         self.setFixedSize(300,120)
+        
 
         hlayout = QHBoxLayout()
 

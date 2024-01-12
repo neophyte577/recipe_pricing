@@ -17,8 +17,7 @@ class IngredientInputRow(QWidget):
 
         self.ingr_name_field = QLineEdit()
         ingredients_list = cost.ingr_dict.keys()
-        ingredient_completer = QCompleter(ingredients_list)
-        self.ingr_name_field.setCompleter(ingredient_completer)
+        self.ingr_name_field.setCompleter(QCompleter(ingredients_list))
 
         self.qty_field = QLineEdit()
         self.qty_field.setValidator(QDoubleValidator())
@@ -26,8 +25,7 @@ class IngredientInputRow(QWidget):
         self.unit_field = QComboBox()
         self.unit_field.addItems(cost.unit_list)
         self.unit_field.setEditable(True)
-        unit_completer = QCompleter(cost.unit_list)
-        self.unit_field.setCompleter(unit_completer)
+        self.unit_field.setCompleter(QCompleter(cost.unit_list))
         self.unit_field.setCurrentIndex(-1)
 
         self.edits = [self.ingr_name_field, self.qty_field, self.unit_field]
@@ -71,6 +69,7 @@ class AddRecipeWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Add Recipe')
+        self.setWindowIcon(QIcon('cake--plus.png'))
 
         self.ingredient_header = QWidget()
         self.yield_header = QWidget()
@@ -217,6 +216,7 @@ class NavigationWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Recipes')
+        self.setWindowIcon(QIcon('cake.png'))
         self.setFixedSize(275,120)
 
         hlayout = QHBoxLayout()

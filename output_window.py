@@ -1,6 +1,6 @@
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QComboBox, QPushButton, QVBoxLayout, QLabel
 from string import capwords
 import cost
@@ -23,7 +23,7 @@ class OutputWindow(QMainWindow):
         self.output_label.setAlignment(Qt.AlignLeft)
 
         self.close_button = QPushButton('Bet')
-        self.close_button.clicked.connect(self.closeWindow)
+        self.close_button.clicked.connect(self.close_window)
 
         layout.addWidget(self.output_label)
         layout.addWidget(self.close_button)
@@ -33,20 +33,23 @@ class OutputWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-    def closeWindow(self):
+    def close_window(self):
 
         self.close()
 
 
 class SelectionWindow(QMainWindow):
 
-    def __init__(self, rec_dict):
+    def __init__(self):
 
         super().__init__()
 
         self.setWindowTitle('Price Which?')
+        icon = QIcon()
+        icon.addFile('currency.png')
+        self.setWindowIcon(icon)
         self.setFixedSize(250,200)
-        self.rec_dict = rec_dict
+        self.rec_dict = cost.rec_dict
 
         layout = QVBoxLayout()
         
@@ -54,7 +57,7 @@ class SelectionWindow(QMainWindow):
         self.recipe_label.setAlignment(Qt.AlignLeft)
 
         self.recipe_selector = QComboBox()
-        self.recipe_selector.addItems(rec_dict.keys())
+        self.recipe_selector.addItems(self.rec_dict.keys())
         self.recipe_selector.setFixedSize(200,25)
         self.recipe_selector.currentIndexChanged.connect(self.update_sizes)
 
@@ -62,7 +65,7 @@ class SelectionWindow(QMainWindow):
         self.size_label.setAlignment(Qt.AlignLeft)
 
         self.size_selector = QComboBox()
-        self.size_selector.addItems(rec_dict[self.recipe_selector.currentText()].makes.keys())
+        self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText()].makes.keys())
         self.size_selector.setFixedSize(200,25)
         self.factor_label = QLabel('Set margin by scale factor:')
         self.factor_label.setAlignment(Qt.AlignLeft)
@@ -111,17 +114,17 @@ class SelectionWindow(QMainWindow):
 
 def main():
 
-    #cost.main()
+    cost.main()
 
     rec_dict = cost.rec_dict
 
-    #app = QApplication()
+    app = QApplication()
 
-    window = SelectionWindow(rec_dict)
-
+    window = SelectionWindow()
     window.show()
 
-    #app.exec()
+    app.exec()
+
 
 
 if __name__ == '__main__':
