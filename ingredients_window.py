@@ -1,10 +1,36 @@
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QAbstractTableModel
 from PySide6.QtGui import QPixmap, QDoubleValidator, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLineEdit, QLabel, QComboBox, QCompleter, QPushButton, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLineEdit, QLabel, QComboBox, QCompleter, QPushButton, QVBoxLayout, QHBoxLayout, QTableView
 import pandas as pd
+import csv
 import cost
 
+class TableModel(QAbstractTableModel):
+
+    def __init__(self, df):
+
+        super(TableModel, self).__init__()
+        self.df = df
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            value = self.df.iloc[index.row(), index.column()]
+            return str(value)
+
+    def rowCount(self, _):
+        return self.df.shape[0]
+
+    def columnCount(self, _):
+        return self.df.shape[1]
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self.df.columns[section])
+            if orientation == Qt.Vertical:
+                return str(self.df.index[section])
+            
 
 class AddIngredientWindow(QMainWindow):
 
@@ -141,13 +167,93 @@ class AddIngredientWindow(QMainWindow):
         self.setCentralWidget(self.central_container_widget)
 
     def add_ingredient(self):
+            
+        if any((field.text().strip() == '') for field in self.input_fields[0:3]) or (self.unit_field.currentText().strip() == ''):
 
-        for field in self.input_fields:
-            field.clear()
+            self.missing_fields_window = MissingFieldsWindow()
+            self.missing_fields_window.show()
+        
+        else:
+
+            new_ingr_row = []
+
+            for field in self.input_fields:
+
+                if isinstance(field, QLineEdit):
+
+                    new_ingr_row.append(field.text())
+
+                if isinstance(field, QComboBox):
+
+                    new_ingr_row.append(field.currentText())
+
+            pd.DataFrame([new_ingr_row]).to_csv('Ingredients.csv', mode='a', header=False, index=False)
+
+            for field in self.input_fields:
+                field.clear()
+
+            self.success_window = SuccessWindow()
+            self.success_window.show()
 
     def close_window(self):
 
         self.close()
+
+class MissingFieldsWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle('Zoinks!')
+        self.setWindowIcon(QIcon('dummy.png'))
+
+        self.error_message = QPushButton('WRONG! Needs more data.')
+        self.error_message.setIcon(QIcon('prohibition.png'))
+        self.error_message.clicked.connect(self.close_window)
+
+        self.setCentralWidget(self.error_message)
+
+    def close_window(self):
+
+        self.close()
+
+class SuccessWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle('You did it!')
+        
+        self.success_button = QPushButton('Great Success!')
+        self.success_button.setIcon(QIcon('tick.png'))
+        self.success_button.clicked.connect(self.close_window)
+
+        self.setCentralWidget(self.success_button)
+
+    def close_window(self):
+
+        self.close()
+
+
+class ViewIngredientsWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle('View Ingredients')
+        self.setWindowIcon(QIcon('eye.png'))
+
+        self.ingredients_table = QTableView()
+
+        data = cost.ingr_df
+
+        self.model = TableModel(data)
+        self.ingredients_table.setModel(self.model)
+
+        self.setCentralWidget(self.ingredients_table)
 
 
 class NavigationWindow(QMainWindow):
@@ -160,7 +266,6 @@ class NavigationWindow(QMainWindow):
         self.setWindowIcon(QIcon('flask.png'))
         self.setFixedSize(300,120)
         
-
         hlayout = QHBoxLayout()
 
         central_layout = QVBoxLayout()
@@ -168,15 +273,19 @@ class NavigationWindow(QMainWindow):
         self.add_ingr_button = QPushButton('Add Ingredients')
         self.add_ingr_button.clicked.connect(self.generate_add_ingr_window)
 
+        self.view_ingr_button = QPushButton('View Ingredients')
+        self.view_ingr_button.clicked.connect(self.generate_view_ingr_window)
+
+        #self.edit_ingr_button = QPushButton('Edit Ingredients')
+        #self.add_ingr_button.clicked.connect(self.generate_edit_ingr_window)
+
         self.update_ingr_button = QPushButton('Update Ingredients')
         #self.add_ingr_button.clicked.connect(self.generate_update_ingr_window)
 
-        self.edit_ingr_button = QPushButton('Manually Edit Ingredients')
-        #self.add_ingr_button.clicked.connect(self.generate_edit_ingr_window)
-
         central_layout.addWidget(self.add_ingr_button)
+        central_layout.addWidget(self.view_ingr_button)
         central_layout.addWidget(self.update_ingr_button)
-        central_layout.addWidget(self.edit_ingr_button)
+        #central_layout.addWidget(self.edit_ingr_button)
 
         icon = QLabel()
         pixmap = QPixmap('ingredients_icon.png')
@@ -197,6 +306,11 @@ class NavigationWindow(QMainWindow):
 
         self.add_ingr_window = AddIngredientWindow()
         self.add_ingr_window.show()
+
+    def generate_view_ingr_window(self):
+
+        self.view_ingr_window = ViewIngredientsWindow()
+        self.view_ingr_window.show()
 
 
 def main():
