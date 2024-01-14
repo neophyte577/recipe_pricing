@@ -12,10 +12,11 @@ class TableModel(QAbstractTableModel):
         super().__init__()
         self.df = df
 
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
-            value = self.df.iloc[index.row(), index.column()]
-            return str(value)
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.DisplayRole or role == Qt.EditRole:
+                value = self.df.iloc[index.row(), index.column()]
+                return str(value)
 
     def rowCount(self, _):
         return self.df.shape[0]
@@ -29,6 +30,17 @@ class TableModel(QAbstractTableModel):
                 return str(self.df.columns[section])
             if orientation == Qt.Vertical:
                 return str(self.df.index[section])
+            
+    def flags(self, _):
+        return Qt.ItemIsSelectable|Qt.ItemIsEnabled|Qt.ItemIsEditable
+    
+    def setData(self, index, value, role):
+
+        if role == Qt.EditRole:
+
+            self.df.iloc[index.row(),index.column()] = value
+
+            return True  
 
 
 class AddIngredientWindow(QMainWindow):
