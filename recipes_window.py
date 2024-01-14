@@ -2,7 +2,8 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QIcon, QDoubleValidator
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLabel, QCompleter, QComboBox, QLineEdit, QPushButton, QVBoxLayout, 
-                               QHBoxLayout, QScrollArea, QSizePolicy)
+                               QGridLayout, QHBoxLayout, QStackedLayout, QScrollArea, QSizePolicy)
+import pandas as pd
 import cost
 import output_window
 
@@ -89,9 +90,8 @@ class AddRecipeWindow(QMainWindow):
     
         self.ingredient_header.setLayout(ingredient_header_layout)
 
-        plus_icon = QIcon('plus-button.png')
         self.add_ingr_row_button = QPushButton('Add Another Ingredient')
-        self.add_ingr_row_button.setIcon(plus_icon)
+        self.add_ingr_row_button.setIcon(QIcon('Icons/plus-button.png'))
         self.add_ingr_row_button.setFixedWidth(160)
         self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
 
@@ -122,7 +122,7 @@ class AddRecipeWindow(QMainWindow):
         self.yield_header.setLayout(yield_header_layout)
 
         self.add_yield_row_button = QPushButton('Add Another Yield')
-        self.add_yield_row_button.setIcon(plus_icon)
+        self.add_yield_row_button.setIcon(QIcon('Icons/plus-button.png'))
         self.add_yield_row_button.setFixedWidth(130)
         self.add_yield_row_button.clicked.connect(self.add_yield_input_row)  
 
@@ -209,11 +209,220 @@ class AddRecipeWindow(QMainWindow):
         self.close()
 
 
+class RecipeEditor(QMainWindow):
+
+    def __init__(self, recipe):
+
+        super().__init__()
+
+        self.recipe_name = recipe.name
+        self.rec_df = recipe.rec_df
+
+        self.setWindowTitle('Edit ' + self.recipe_name.capitalize())
+        self.setWindowIcon(QIcon('Icons/cake--pencil.png'))
+
+        self.ingredient_header = QWidget()
+        self.yield_header = QWidget()
+        self.ingredient_input_widget = QWidget()
+        self.yield_input_widget = QWidget()
+        self.combined_input_widget = QWidget()
+        self.addition_button_row = QWidget()
+        self.main_button_row = QWidget()
+        self.central_container_widget = QWidget()
+
+        # Ingredient Column
+
+        ingredient_header_layout = QHBoxLayout()
+        ingredient_header_layout.addWidget(QLabel('Ingredient'))
+        ingredient_header_layout.addWidget(QLabel('Quantity'))
+        ingredient_header_layout.addWidget(QLabel('Unit'))
+    
+        self.ingredient_header.setLayout(ingredient_header_layout)
+
+        self.add_ingr_row_button = QPushButton('Add Another Ingredient')
+        self.add_ingr_row_button.setIcon(QIcon('Icons/plus-button.png'))
+        self.add_ingr_row_button.setFixedWidth(160)
+        self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
+
+        ingredient_layout = QVBoxLayout()
+        self.ingredient_input_layout = QVBoxLayout()
+        self.ingredient_input_container_widget = QWidget()
+        self.ingredient_input_container_widget.setLayout(self.ingredient_input_layout)
+        for k in range(self.rec_df.shape[0]):
+            self.ingredient_input_layout.addWidget(IngredientInputRow())
+        self.ingredient_input_layout.addStretch()
+
+        self.ingredient_scroll_area = QScrollArea()
+        self.ingredient_scroll_area.setWidget(self.ingredient_input_container_widget)
+        self.ingredient_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.ingredient_scroll_area.setWidgetResizable(True)
+
+        ingredient_layout.addWidget(self.ingredient_header)
+        ingredient_layout.addWidget(self.ingredient_scroll_area)
+        ingredient_layout.addWidget(self.add_ingr_row_button)
+        self.ingredient_input_widget.setLayout(ingredient_layout)
+
+        # Yield Column
+
+        yield_header_layout = QHBoxLayout()
+        yield_header_layout.addWidget(QLabel('Makes'))
+        yield_header_layout.addWidget(QLabel('Size'))
+
+        self.yield_header.setLayout(yield_header_layout)
+
+        self.add_yield_row_button = QPushButton('Add Another Yield')
+        self.add_yield_row_button.setIcon(QIcon('Icons/plus-button.png'))
+        self.add_yield_row_button.setFixedWidth(130)
+        self.add_yield_row_button.clicked.connect(self.add_yield_input_row)  
+
+        yield_layout = QVBoxLayout()
+        self.yield_input_layout = QVBoxLayout()
+        self.yield_input_fields_container_widget = QWidget()
+        self.yield_input_fields_container_widget.setLayout(self.yield_input_layout)
+        for k in range(self.rec_df.shape[0]):
+            self.yield_input_layout.addWidget(YieldInputRow())
+        self.yield_input_layout.addStretch()
+        self.yield_insertion_index = 3
+        
+        self.yield_scroll_area = QScrollArea()
+        self.yield_scroll_area.setWidget(self.yield_input_fields_container_widget)
+        self.yield_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.yield_scroll_area.setWidgetResizable(True)
+
+        yield_layout.addWidget(self.yield_header)
+        yield_layout.addWidget(self.yield_scroll_area)
+        yield_layout.addWidget(self.add_yield_row_button)
+        self.yield_input_widget.setLayout(yield_layout)
+    
+        # Combined Header & Input Row
+
+        combined_input_layout = QHBoxLayout()
+        combined_input_layout.addWidget(self.ingredient_input_widget)
+        combined_input_layout.addWidget(self.yield_input_widget)
+        self.combined_input_widget.setLayout(combined_input_layout)
+
+        # Main Button Row
+
+        main_button_layout = QHBoxLayout()
+
+        self.add_ingr_button = QPushButton('Update Recipe')
+        self.add_ingr_button.clicked.connect(self.update_recipe)
+
+        self.close_button = QPushButton('Sike')
+        self.close_button.clicked.connect(self.close_window)
+
+        main_button_layout.addWidget(self.add_ingr_button)
+        main_button_layout.addWidget(self.close_button)
+        self.main_button_row.setLayout(main_button_layout)
+
+        # Central Widget
+
+        central_layout = QVBoxLayout()
+
+        central_layout.addWidget(self.combined_input_widget)
+        central_layout.addWidget(self.addition_button_row)
+        central_layout.addWidget(self.main_button_row)
+
+        self.central_container_widget.setLayout(central_layout)
+        self.setCentralWidget(self.central_container_widget)
+
+    def add_ingredient_input_row(self):
+
+        self.ingredient_input_layout.addWidget(IngredientInputRow())
+
+    def add_yield_input_row(self):
+
+        self.yield_input_layout.addWidget(YieldInputRow())        
+
+    def update_recipe(self):
+
+        self.close()
+
+    def close_window(self):
+
+        self.close()
+
+class MissingFieldsWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle('Zoinks!')
+        self.setWindowIcon(QIcon('Icons/dummy.png'))
+
+        self.error_message = QPushButton('WRONG! Needs more data.')
+        self.error_message.setIcon(QIcon('prohibition.png'))
+        self.error_message.clicked.connect(self.close_window)
+
+        self.setCentralWidget(self.error_message)
+
+    def close_window(self):
+
+        self.close()
+
+class EditRecipesWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.recipe_editor = None
+
+        self.setWindowTitle('Edit Recipes')
+        self.setWindowIcon(QIcon('Icons/cake--pencil.png'))
+
+        self.recipe_selector = QComboBox()
+        self.recipe_selector.addItems(cost.rec_dict.keys())
+        self.recipe_selector.setEditable(True)
+        self.recipe_selector.setCompleter(QCompleter(cost.rec_dict.keys()))
+
+        self.main_button_row = QWidget()
+        main_button_layout = QHBoxLayout()
+
+        self.add_ingr_button = QPushButton('Edit Recipe')
+        self.add_ingr_button.clicked.connect(self.edit_recipe)
+
+        self.close_button = QPushButton('Sayonara')
+        self.close_button.clicked.connect(self.close_window)
+
+        main_button_layout.addWidget(self.add_ingr_button)
+        main_button_layout.addWidget(self.close_button)
+        self.main_button_row.setLayout(main_button_layout)
+
+        self.central_container_widget = QWidget()
+        central_layout = QVBoxLayout()
+        central_layout.addWidget(self.recipe_selector)
+        central_layout.addWidget(self.main_button_row)
+        self.central_container_widget.setLayout(central_layout)
+
+        self.setCentralWidget(self.central_container_widget)
+
+    def edit_recipe(self):
+
+        selected_recipe = cost.rec_dict[self.recipe_selector.currentText()]
+
+        self.recipe_editor = RecipeEditor(selected_recipe)
+        self.recipe_editor.show()
+
+    def close_window(self):
+
+        self.close()
+
+    def closeEvent(self, event):
+
+        if self.recipe_editor:
+
+            self.recipe_editor.close()
+
+
 class NavigationWindow(QMainWindow):
 
     def __init__(self):
 
         super().__init__()
+
+        self.add_recipe_window, self.edit_recipe_window, self.output_window = None, None, None
 
         self.setWindowTitle('Recipes')
         self.setWindowIcon(QIcon('cake.png'))
@@ -226,19 +435,18 @@ class NavigationWindow(QMainWindow):
         self.add_recipe_button = QPushButton('Add Recipe')
         self.add_recipe_button.clicked.connect(self.generate_add_recipe_window)
 
-        self.modify_recipe_button = QPushButton('Edit Recipe')
-        #self.add_recipe_button.clicked.connect(self.generate_update_rec_window)
+        self.edit_recipes_button = QPushButton('Edit Recipes')
+        self.edit_recipes_button.clicked.connect(self.generate_edit_recipes_window)
 
         self.price_recipe_button = QPushButton('Price Recipe')
         self.price_recipe_button.clicked.connect(self.generate_output_window)
 
         vlayout.addWidget(self.add_recipe_button)
-        vlayout.addWidget(self.modify_recipe_button)
+        vlayout.addWidget(self.edit_recipes_button)
         vlayout.addWidget(self.price_recipe_button)
 
         icon = QLabel()
-        pixmap = QPixmap('recipe_icon.png')
-        icon.setPixmap(pixmap)
+        icon.setPixmap(QPixmap('Icons/recipe_icon.png'))
                
         container_widget = QWidget()
         container_widget.setLayout(vlayout)
@@ -255,12 +463,22 @@ class NavigationWindow(QMainWindow):
 
         self.add_recipe_window = AddRecipeWindow()
         self.add_recipe_window.show()
+
+    def generate_edit_recipes_window(self):
         
+        self.edit_recipes_window = EditRecipesWindow()
+        self.edit_recipes_window.show()        
 
     def generate_output_window(self):
 
         self.output_window = output_window.SelectionWindow()
         self.output_window.show()
+
+    def closeEvent(self, event):
+
+        for w in [self.add_recipe_window, self.edit_recipes_window, self.output_window]:
+            if w:
+                w.close()
 
 
 def main():

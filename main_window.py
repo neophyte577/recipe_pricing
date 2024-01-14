@@ -9,10 +9,14 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
 
+        self.ingredients_window = None
+        self.recipes_window = None
+        self.output_window = None
+
         super().__init__()
 
         self.setWindowTitle('Main Window')
-        self.setWindowIcon(QIcon('cutleries.png'))
+        self.setWindowIcon(QIcon('Icons/cutleries.png'))
         self.setFixedSize(250,135)
 
         hlayout = QHBoxLayout()
@@ -35,7 +39,7 @@ class MainWindow(QMainWindow):
         vlayout.addStretch()
 
         logo = QLabel()
-        pixmap = QPixmap('chef_logo.png')
+        pixmap = QPixmap('Icons/chef_logo.png')
         logo.setPixmap(pixmap)
 
         container_widget = QWidget()
@@ -43,7 +47,6 @@ class MainWindow(QMainWindow):
 
         hlayout.addWidget(container_widget)
         hlayout.addWidget(logo)
-        #hlayout.setContentsMargins(10,10,10,20)
 
         widget = QWidget()
         widget.setLayout(hlayout)
@@ -64,7 +67,12 @@ class MainWindow(QMainWindow):
 
         self.output_window = output_window.SelectionWindow()
         self.output_window.show()
-        
+
+    def closeEvent(self, event):
+
+        for w in [self.ingredients_window, self.recipes_window, self.output_window]:
+            if w:
+                w.close()
 
 def main():
 
