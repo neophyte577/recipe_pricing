@@ -1,9 +1,30 @@
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QComboBox, QPushButton, QVBoxLayout, QLabel
+from PySide6.QtGui import QFont, QIcon, QValidator, QDoubleValidator
+from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QComboBox, QPushButton, QVBoxLayout, QLabel, QCompleter
 from string import capwords
 import cost
+
+
+class RecipeSelectionValidator(QValidator):
+
+    def __init__(self, recipes):
+
+        QValidator.__init__(self)
+        self.recipes = [rec.lower() for rec in recipes]
+
+    def validate(self, inputText, _):
+
+        if inputText.lower() in self.recipes:
+            return QValidator.Acceptable
+        
+        length = len(inputText)
+
+        for rec in self.recipes:
+            if rec[:length] == inputText.lower():
+                return QValidator.Intermediate
+            
+        return QValidator.Invalid
 
 
 class OutputWindow(QMainWindow):
@@ -45,9 +66,7 @@ class SelectionWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Price Which?')
-        icon = QIcon()
-        icon.addFile('currency.png')
-        self.setWindowIcon(icon)
+        self.setWindowIcon(QIcon('Icons/currency.png'))
         self.setFixedSize(250,200)
         self.rec_dict = cost.rec_dict
 
@@ -56,8 +75,13 @@ class SelectionWindow(QMainWindow):
         self.recipe_label = QLabel('Select a recipe:')
         self.recipe_label.setAlignment(Qt.AlignLeft)
 
+        recipes = self.rec_dict.keys()
+
         self.recipe_selector = QComboBox()
-        self.recipe_selector.addItems(self.rec_dict.keys())
+        self.recipe_selector.addItems([capwords(rec) for rec in self.rec_dict.keys()])
+        self.recipe_selector.setEditable(True)
+        self.recipe_selector.setCompleter(QCompleter(self.rec_dict.keys()))
+        self.recipe_selector.setValidator(RecipeSelectionValidator(recipes))
         self.recipe_selector.setFixedSize(200,25)
         self.recipe_selector.currentIndexChanged.connect(self.update_sizes)
 
@@ -65,7 +89,7 @@ class SelectionWindow(QMainWindow):
         self.size_label.setAlignment(Qt.AlignLeft)
 
         self.size_selector = QComboBox()
-        self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText()].makes.keys())
+        self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText().lower()].makes.keys())
         self.size_selector.setFixedSize(200,25)
         self.factor_label = QLabel('Set margin by scale factor:')
         self.factor_label.setAlignment(Qt.AlignLeft)
@@ -74,6 +98,7 @@ class SelectionWindow(QMainWindow):
         self.set_scale_factor.addItems(['3','2.5','2'])
         self.set_scale_factor.setFixedSize(50,25)
         self.set_scale_factor.setEditable(True)
+        self.set_scale_factor.setValidator(QDoubleValidator())
         self.set_scale_factor.setInsertPolicy(QComboBox.InsertAlphabetically)
 
         self.display_output_button = QPushButton('Vamanos')
@@ -97,11 +122,11 @@ class SelectionWindow(QMainWindow):
     def update_sizes(self, _):
 
         self.size_selector.clear()
-        self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText()].makes.keys())
+        self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText().lower()].makes.keys())
     
     def display_button_pressed(self):
 
-        recipe = self.rec_dict[self.recipe_selector.currentText()]
+        recipe = self.rec_dict[self.recipe_selector.currentText().lower()]
 
         size = self.size_selector.currentText()
 
@@ -116,15 +141,12 @@ def main():
 
     cost.main()
 
-    rec_dict = cost.rec_dict
-
     app = QApplication()
 
     window = SelectionWindow()
     window.show()
 
     app.exec()
-
 
 
 if __name__ == '__main__':
