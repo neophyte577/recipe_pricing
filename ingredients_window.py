@@ -1,9 +1,34 @@
 
 from PySide6.QtCore import Qt, QAbstractTableModel
-from PySide6.QtGui import QPixmap, QDoubleValidator, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLineEdit, QLabel, QComboBox, QCompleter, QPushButton, QVBoxLayout, QGridLayout, QHBoxLayout, QTableView
+from PySide6.QtGui import QPixmap, QValidator, QDoubleValidator, QIcon
+from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLineEdit, QLabel, QComboBox, QCompleter, QPushButton, QVBoxLayout, 
+                               QScrollArea, QHBoxLayout, QTableView, QDialog, QDialogButtonBox)
 import pandas as pd
 import cost
+
+# Custom input validator
+
+class InputValidator(QValidator):
+
+    def __init__(self, stuff):
+
+        super().__init__()
+        self.stuff = [thing.lower() for thing in stuff]
+
+    def validate(self, inputText, _):
+
+        if inputText.lower() in self.stuff:
+            return QValidator.Acceptable
+        
+        length = len(inputText)
+
+        for thing in self.stuff:
+            if thing[:length] == inputText.lower():
+                return QValidator.Intermediate
+            
+        return QValidator.Invalid
+
+# Model for table view
 
 class TableModel(QAbstractTableModel):
 
@@ -41,7 +66,48 @@ class TableModel(QAbstractTableModel):
             self.df.iloc[index.row(),index.column()] = value
 
             return True  
+        
+# General use dialogs
 
+class SuccessDialog(QDialog):
+
+    def __init__(self, parent=None):
+
+        super().__init__()
+
+        self.setWindowTitle('You did it!')
+        self.setWindowIcon(QIcon('Icons/tick.png'))
+
+        self.button = QDialogButtonBox(QDialogButtonBox.Ok)
+        self.button.button(QDialogButtonBox.Ok).setText('Cool')
+        self.button.accepted.connect(self.accept)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel('Great success!')
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.button)
+        self.setLayout(self.layout)
+
+class InputErrorDialog(QDialog):
+
+    def __init__(self, parent=None, message=''):
+
+        super().__init__()
+
+        self.setWindowTitle('Zoinks!')
+        self.setWindowIcon(QIcon('Icons/dummy.png'))
+
+        self.button = QDialogButtonBox(QDialogButtonBox.Ok)
+        self.button.button(QDialogButtonBox.Ok).setText('Ard')
+        self.button.accepted.connect(self.accept)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel(message)
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.button)
+        self.setLayout(self.layout)
+
+# Add Ingredients window and associated dialogs
 
 class AddIngredientWindow(QMainWindow):
 
@@ -85,6 +151,7 @@ class AddIngredientWindow(QMainWindow):
         self.unit_field.addItems(cost.unit_list)
         self.unit_field.setEditable(True)
         self.unit_field.setCompleter(QCompleter(cost.unit_list))
+        self.unit_field.setValidator(InputValidator(cost.unit_list))
         self.unit_field.setCurrentIndex(-1)
         unit_layout.addWidget(QLabel('Unit'))
         unit_layout.addWidget(self.unit_field)
@@ -112,6 +179,7 @@ class AddIngredientWindow(QMainWindow):
         self.each_unit_field.addItems(cost.unit_list)
         self.each_unit_field.setEditable(True)
         self.each_unit_field.setCompleter(QCompleter(cost.unit_list))
+        self.each_unit_field.setValidator(InputValidator(cost.unit_list))
         self.each_unit_field.setCurrentIndex(-1)
         each_unit_layout.addWidget(QLabel('Each Unit'))
         each_unit_layout.addWidget(self.each_unit_field)
@@ -178,11 +246,17 @@ class AddIngredientWindow(QMainWindow):
         self.setCentralWidget(self.central_container_widget)
 
     def add_ingredient(self):
+
+        ingredient_name = self.name_field.text().strip().lower()
             
         if any((field.text().strip() == '') for field in self.input_fields[0:3]) or (self.unit_field.currentText().strip() == ''):
 
-            self.missing_fields_window = MissingFieldsWindow()
-            self.missing_fields_window.show()
+            InputErrorDialog(self, 'WRONG! Needs more input.').exec()
+            return
+        
+        elif ingredient_name in cost.ingr_dict.keys():
+
+            InputErrorDialog(self, 'WRONG! ' + ingredient_name + ' is already an ingredient.').exec()
         
         else:
 
@@ -203,86 +277,171 @@ class AddIngredientWindow(QMainWindow):
             for field in self.input_fields:
                 field.clear()
 
-            self.success_window = SuccessWindow()
-            self.success_window.show()
+            cost.main()
+
+            SuccessDialog(self).exec()
 
     def close_window(self):
 
         self.close()
 
-class MissingFieldsWindow(QMainWindow):
+# Edit Ingredients window 
+
+class EditIngredientsWindow(QMainWindow):
 
     def __init__(self):
 
         super().__init__()
 
-        self.setWindowTitle('Zoinks!')
-        self.setWindowIcon(QIcon('Icons/dummy.png'))
+        self.setWindowTitle('Edit Ingredients')
+        self.setWindowIcon(QIcon('Icons/flask--pencil.png'))
+        self.setFixedSize(900,600)
 
-        self.error_message = QPushButton('WRONG! Needs more data.')
-        self.error_message.setIcon(QIcon('prohibition.png'))
-        self.error_message.clicked.connect(self.close_window)
+        # Viewing Table
 
-        self.setCentralWidget(self.error_message)
-
-    def close_window(self):
-
-        self.close()
-
-class SuccessWindow(QMainWindow):
-
-    def __init__(self):
-
-        super().__init__()
-
-        self.setWindowTitle('You did it!')
-        
-        self.success_button = QPushButton('Great Success!')
-        self.success_button.setIcon(QIcon('tick.png'))
-        self.success_button.clicked.connect(self.close_window)
-
-        self.setCentralWidget(self.success_button)
-
-    def close_window(self):
-
-        self.close()
-
-
-class ViewIngredientsWindow(QMainWindow):
-
-    def __init__(self):
-
-        super().__init__()
-
-        self.setWindowTitle('View Ingredients')
-        self.setWindowIcon(QIcon('Icons/eye.png'))
-        self.setFixedSize(890,600)
-
-        ingr_df = cost.ingr_df.copy(deep=True)
-        ingr_df.set_index('name', inplace=True)
-        ingr_df.columns = ['Cost', 'Quantity', 'Unit', 'Density', 'Each Quantity', 'Each Unit', 'Product Code']
-        ingr_df.sort_index(ascending=True, inplace=True)
-        ingr_df.fillna('', inplace=True)
-
-        central_layout = QGridLayout()
+        table = cost.ingr_df.copy(deep=True)
+        table.set_index('name', inplace=True)
+        table.columns = ['Cost', 'Quantity', 'Unit', 'Density', 'Each Quantity', 'Each Unit', 'Product Code']
+        table.sort_index(ascending=True, inplace=True)
+        table.fillna('', inplace=True)
 
         self.ingredients_table = QTableView()
-        self.model = TableModel(ingr_df)
+        self.model = TableModel(table)
         self.ingredients_table.setModel(self.model)
-        
-        central_layout.addWidget(self.ingredients_table)
-        central_layout.setContentsMargins(5, 5, 5, 5)
-        self.setLayout(central_layout)
-    
-        self.setCentralWidget(self.ingredients_table)
 
+        # Buttons
+
+        self.save_button = QPushButton('Save Changes')
+        self.save_button.clicked.connect(self.save_changes)
+        
+        self.close_button = QPushButton('Farewell')
+        self.close_button.clicked.connect(self.close_window)
+        
+        self.button_row = QWidget()
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.close_button)
+        self.button_row.setLayout(button_layout)
+        
+        self.central_container_widget = QWidget()
+        central_layout = QVBoxLayout()
+        central_layout.addWidget(self.ingredients_table)
+        central_layout.addWidget(self.button_row)
+        central_layout.setContentsMargins(5, 5, 5, 5)
+        self.central_container_widget.setLayout(central_layout)
+    
+        self.setCentralWidget(self.central_container_widget)
+
+    def save_changes(self):
+
+        pass
+
+    def close_window(self):
+
+        self.close()
+
+# Remove Ingredients window and associated dialog
+
+class RemoveIngredientsWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle('Remove Ingredients')
+        self.setWindowIcon(QIcon('Icons/flask--minus.png'))
+        self.setFixedWidth(275)
+
+        # Selector
+
+        self.ingredient_selector = QComboBox()
+        self.ingredient_selector.addItems(sorted(cost.ingr_dict.keys()))
+        self.ingredient_selector.setEditable(True)
+        self.ingredient_selector.setCompleter(QCompleter(cost.ingr_dict.keys()))
+        self.ingredient_selector.setValidator(InputValidator(cost.ingr_dict.keys()))
+        self.ingredient_selector.setCurrentIndex(-1)
+
+        # Buttons
+
+        self.button_row = QWidget()
+        button_layout = QHBoxLayout()
+
+        self.remove_ingredient_button = QPushButton('Remove Ingredient')
+        self.remove_ingredient_button.clicked.connect(self.remove_ingredient)
+
+        self.close_button = QPushButton('Deuces')
+        self.close_button.clicked.connect(self.close_window)
+
+        button_layout.addWidget(self.remove_ingredient_button)
+        button_layout.addWidget(self.close_button)
+        self.button_row.setLayout(button_layout)
+
+        self.central_container_widget = QWidget()
+        central_layout = QVBoxLayout()
+        central_layout.addStretch()
+        central_layout.addWidget(self.ingredient_selector)
+        central_layout.addWidget(self.button_row)
+        self.central_container_widget.setLayout(central_layout)
+        self.setCentralWidget(self.central_container_widget)        
+
+    def remove_ingredient(self):
+
+        ingredient_selection = self.ingredient_selector.currentText().lower().strip()
+
+        if ingredient_selection.strip() == '':
+
+            InputErrorDialog(self, 'WRONG! Please enter an ingredient.').exec()
+            return
+
+        elif self.ingredient_selector.currentText().lower().strip() in cost.ingr_dict.keys():
+            
+            if ConfirmationDialog(self).exec():
+                ingr_df = cost.ingr_df.copy(deep=True)
+                ingr_df.drop(ingr_df[ingr_df['name']==self.ingredient_selector.currentText()].index, inplace=True)
+                ingr_df.to_csv('Ingredients.csv', mode='w', index=False)
+                self.ingredient_selector.removeItem(self.ingredient_selector.currentIndex())
+                self.ingredient_selector.setCurrentIndex(-1)
+                cost.main()
+                SuccessDialog(self).exec()
+            else:
+                return
+            
+        else:
+            InputErrorDialog(self, 'WRONG! ' + ingredient_selection.capitalize() + ' is not an ingredient!').exec()
+            return
+
+    def close_window(self):
+        
+        self.close()
+
+class ConfirmationDialog(QDialog):
+
+    def __init__(self, parent=None):
+
+        super().__init__()
+
+        self.setWindowTitle('No Cap?')
+        self.setWindowIcon(QIcon('Icons/exclamation--frame.png'))
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
+        self.buttons.button(QDialogButtonBox.Cancel).setText('Nah')
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel('Are you sure you finna buss it?')
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.buttons)
+        self.setLayout(self.layout)
+
+# Main navigation window
 
 class NavigationWindow(QMainWindow):
 
     def __init__(self):
 
-        self.add_ingr_window = None
-        self.view_ingr_window = None
+        self.add_ingr_window, self.edit_ingr_window, self.remove_ingr_window = None, None, None
 
         super().__init__()
 
@@ -297,15 +456,15 @@ class NavigationWindow(QMainWindow):
         self.add_ingr_button = QPushButton('Add Ingredients')
         self.add_ingr_button.clicked.connect(self.generate_add_ingr_window)
 
-        self.view_ingr_button = QPushButton('View Ingredients')
-        self.view_ingr_button.clicked.connect(self.generate_view_ingr_window)
+        self.view_ingr_button = QPushButton('Edit Ingredients')
+        self.view_ingr_button.clicked.connect(self.generate_edit_ingredients_window)
 
-        self.update_ingr_button = QPushButton('Update Ingredients')
-        #self.add_ingr_button.clicked.connect(self.generate_update_ingr_window)
+        self.remove_ingr_button = QPushButton('Remove Ingredients')
+        self.remove_ingr_button.clicked.connect(self.generate_remove_ingredients_window)
 
         central_layout.addWidget(self.add_ingr_button)
         central_layout.addWidget(self.view_ingr_button)
-        central_layout.addWidget(self.update_ingr_button)
+        central_layout.addWidget(self.remove_ingr_button)
 
         icon = QLabel()
         pixmap = QPixmap('Icons/ingredients_icon.png')
@@ -327,14 +486,19 @@ class NavigationWindow(QMainWindow):
         self.add_ingr_window = AddIngredientWindow()
         self.add_ingr_window.show()
 
-    def generate_view_ingr_window(self):
+    def generate_edit_ingredients_window(self):
 
-        self.view_ingr_window = ViewIngredientsWindow()
-        self.view_ingr_window.show()
+        self.edit_ingr_window = EditIngredientsWindow()
+        self.edit_ingr_window.show()
+
+    def generate_remove_ingredients_window(self):
+
+        self.remove_ingr_window = RemoveIngredientsWindow()
+        self.remove_ingr_window.show()
 
     def closeEvent(self, event):
 
-        for w in [self.add_ingr_window, self.view_ingr_window]:
+        for w in [self.add_ingr_window, self.edit_ingr_window, self.remove_ingr_window]:
             if w:
                 w.close()
 
