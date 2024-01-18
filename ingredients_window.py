@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLineEdit, QL
 import pandas as pd
 import cost
 
-# Custom input validator
+# Custom input validator for to check whether current input is contained in any among strings in passed list 
 
 class InputValidator(QValidator):
 
@@ -71,9 +71,9 @@ class TableModel(QAbstractTableModel):
 
 class SuccessDialog(QDialog):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, message='Great success!'):
 
-        super().__init__()
+        super().__init__(parent)
 
         self.setWindowTitle('You did it!')
         self.setWindowIcon(QIcon('Icons/tick.png'))
@@ -83,16 +83,37 @@ class SuccessDialog(QDialog):
         self.button.accepted.connect(self.accept)
 
         self.layout = QVBoxLayout()
-        self.message = QLabel('Great success!')
+        self.message = QLabel(message)
         self.layout.addWidget(self.message)
         self.layout.addWidget(self.button)
+        self.setLayout(self.layout)
+
+class ConfirmationDialog(QDialog):
+
+    def __init__(self, parent=None, message='Are you sure you finna buss it?'):
+
+        super().__init__(parent)
+
+        self.setWindowTitle('No Cap?')
+        self.setWindowIcon(QIcon('Icons/exclamation--frame.png'))
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
+        self.buttons.button(QDialogButtonBox.Cancel).setText('Nah')
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel(message)
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.buttons)
         self.setLayout(self.layout)
 
 class InputErrorDialog(QDialog):
 
     def __init__(self, parent=None, message=''):
 
-        super().__init__()
+        super().__init__(parent)
 
         self.setWindowTitle('Zoinks!')
         self.setWindowIcon(QIcon('Icons/dummy.png'))
@@ -251,12 +272,12 @@ class AddIngredientWindow(QMainWindow):
             
         if any((field.text().strip() == '') for field in self.input_fields[0:3]) or (self.unit_field.currentText().strip() == ''):
 
-            InputErrorDialog(self, 'WRONG! Needs more input.').exec()
+            InputErrorDialog(parent=self, message='WRONG! Needs more input.').exec()
             return
         
         elif ingredient_name in cost.ingr_dict.keys():
 
-            InputErrorDialog(self, 'WRONG! ' + ingredient_name + ' is already an ingredient.').exec()
+            InputErrorDialog(parent=self, message='WRONG! ' + ingredient_name + ' is already an ingredient.').exec()
         
         else:
 
@@ -299,14 +320,14 @@ class EditIngredientsWindow(QMainWindow):
 
         # Viewing Table
 
-        table = cost.ingr_df.copy(deep=True)
-        table.set_index('name', inplace=True)
-        table.columns = ['Cost', 'Quantity', 'Unit', 'Density', 'Each Quantity', 'Each Unit', 'Product Code']
-        table.sort_index(ascending=True, inplace=True)
-        table.fillna('', inplace=True)
+        self.table = cost.ingr_df.copy(deep=True)
+        self.table.set_index('name', inplace=True)
+        self.table.columns = ['Cost', 'Quantity', 'Unit', 'Density', 'Each Quantity', 'Each Unit', 'Product Code']
+        self.table.sort_index(ascending=True, inplace=True)
+        self.table.fillna('', inplace=True)
 
         self.ingredients_table = QTableView()
-        self.model = TableModel(table)
+        self.model = TableModel(self.table)
         self.ingredients_table.setModel(self.model)
 
         # Buttons
@@ -334,7 +355,20 @@ class EditIngredientsWindow(QMainWindow):
 
     def save_changes(self):
 
-        pass
+        if ConfirmationDialog(parent=self).exec():
+
+            new_ingr_df = self.table.copy(deep=True)
+
+            new_ingr_df.reset_index(inplace=True)
+
+            new_ingr_df.columns = ['name','cost','qty','unit','density','each_qty','each_unit','code']
+
+            new_ingr_df.to_csv('Ingredients.csv', mode='w', index=False, header=True)
+
+            SuccessDialog(parent=self).exec()
+        
+        else:
+            return
 
     def close_window(self):
 
@@ -390,7 +424,7 @@ class RemoveIngredientsWindow(QMainWindow):
 
         if ingredient_selection.strip() == '':
 
-            InputErrorDialog(self, 'WRONG! Please enter an ingredient.').exec()
+            InputErrorDialog(parent=self, message='WRONG! Please enter an ingredient.').exec()
             return
 
         elif self.ingredient_selector.currentText().lower().strip() in cost.ingr_dict.keys():
@@ -407,33 +441,13 @@ class RemoveIngredientsWindow(QMainWindow):
                 return
             
         else:
-            InputErrorDialog(self, 'WRONG! ' + ingredient_selection.capitalize() + ' is not an ingredient!').exec()
+            InputErrorDialog(parent=self, message='WRONG! ' + ingredient_selection.capitalize() + ' is not an ingredient!').exec()
             return
 
     def close_window(self):
         
         self.close()
 
-class ConfirmationDialog(QDialog):
-
-    def __init__(self, parent=None):
-
-        super().__init__()
-
-        self.setWindowTitle('No Cap?')
-        self.setWindowIcon(QIcon('Icons/exclamation--frame.png'))
-
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
-        self.buttons.button(QDialogButtonBox.Cancel).setText('Nah')
-        self.buttons.accepted.connect(self.accept)
-        self.buttons.rejected.connect(self.reject)
-
-        self.layout = QVBoxLayout()
-        self.message = QLabel('Are you sure you finna buss it?')
-        self.layout.addWidget(self.message)
-        self.layout.addWidget(self.buttons)
-        self.setLayout(self.layout)
 
 # Main navigation window
 
