@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QIcon, QValidator, QDoubleValidator
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QDialog, QLabel, QCompleter, QComboBox, QLineEdit, QPushButton, QVBoxLayout, 
                                QHBoxLayout, QScrollArea, QSizePolicy, QDialogButtonBox)
+from string import capwords
 from os import remove
 import numpy as np
 import pandas as pd
@@ -33,7 +34,7 @@ class SuccessDialog(QDialog):
 
     def __init__(self, message='', parent=None):
 
-        super().__init__()
+        super().__init__(parent)
 
         self.setWindowTitle('You did it!')
         self.setWindowIcon(QIcon('Icons/tick.png'))
@@ -51,11 +52,33 @@ class SuccessDialog(QDialog):
         self.layout.addWidget(self.button)
         self.setLayout(self.layout)
 
+class ConfirmationDialog(QDialog):
+
+    def __init__(self, parent=None, message='Are you sure you finna buss it?'):
+
+        super().__init__(parent)
+
+        self.setWindowTitle('No Cap?')
+        self.setWindowIcon(QIcon('Icons/exclamation--frame.png'))
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
+        self.buttons.button(QDialogButtonBox.Cancel).setText('Nah')
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel(message)
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.buttons)
+        self.setLayout(self.layout)
+
+
 class InputErrorDialog(QDialog):
 
     def __init__(self, message, parent=None):
 
-        super().__init__()
+        super().__init__(parent)
 
         self.setWindowTitle('Ruh Roh!')
         self.setWindowIcon(QIcon('Icons/dummy.png'))
@@ -72,9 +95,12 @@ class InputErrorDialog(QDialog):
 
 class IngredientNameField(QComboBox):
 
-    def __init__(self):
+    def __init__(self, parent=None, index=0):
 
-        super().__init__()
+        super().__init__(parent)
+
+        self.parent_window = parent
+        self.index = index
 
         ingredient_names = cost.ingr_dict.keys()
         self.addItems(sorted(ingredient_names))
@@ -82,12 +108,69 @@ class IngredientNameField(QComboBox):
         self.setCompleter(QCompleter(ingredient_names))
         self.setValidator(InputValidator(ingredient_names))
         self.setCurrentIndex(-1)
+        self.currentIndexChanged.connect(self.update_unit_field)
+
+    def get_units(self, input):
+
+        units = []
+
+        if input in cost.ingr_dict.keys():
+
+            ingredient = cost.ingr_dict[input]
+            
+            try:
+                self.parent_window.unit_layout.itemAt(self.index).widget().clear()
+            except AttributeError:
+                pass
+            
+            if cost.ingr_dict[self.currentText()].density != np.pi:
+                units = cost.unit_list
+                return units
+            else:
+                if cost.ingr_dict[self.currentText()].unit in cost.weight_dict.keys():
+                    units = list(cost.weight_dict.keys())
+                    if ingredient.each_list != []:
+                        units += list(cost.count_dict.keys())
+                    return units
+                elif cost.ingr_dict[self.currentText()].unit in cost.vol_dict.keys():
+                    units = list(cost.vol_dict.keys())
+                    if ingredient.each_list != []:
+                        units += list(cost.count_dict.keys())
+                    return units
+                elif cost.ingr_dict[self.currentText()].unit in cost.count_dict.keys():
+                    units = list(cost.count_dict.keys())
+                    return units
+                else:
+                    print()
+                    print('tf')
+                    print()
+        
+        else:
+            print(input)
+
+        
+
+    def update_unit_field(self):
+
+        self.units = self.get_units(self.currentText().strip().lower())
+        try:
+            unit_field = self.parent_window.unit_layout.itemAt(self.index).widget()
+            unit_field.addItems(self.units)
+            unit_field.setEditable(True)
+            unit_field.setCompleter(QCompleter(self.units))
+            unit_field.setValidator(InputValidator(self.units))
+            unit_field.setCurrentIndex(-1)
+        except AttributeError:
+            pass
+
 
 class UnitField(QComboBox):
 
-    def __init__(self, units):
+    def __init__(self, units, index=0):
 
         super().__init__()
+
+        self.index = index
 
         self.addItems(units)
         self.setEditable(True)
@@ -129,9 +212,10 @@ class AddRecipeWindow(QMainWindow):
         self.ingr_name_column = QWidget()
         self.ingr_name_layout = QVBoxLayout()
         self.ingr_name_layout.addWidget(QLabel('Ingredient Name'))
-        for k in range(10):
-            self.ingr_name_layout.addWidget(IngredientNameField())
+        for k in range(1,11):
+            self.ingr_name_layout.addWidget(IngredientNameField(parent=self, index=k))
         self.ingr_name_column.setLayout(self.ingr_name_layout)
+        self.ingredient_index = 11
 
         self.qty_column = QWidget()
         self.qty_layout = QVBoxLayout()
@@ -272,7 +356,8 @@ class AddRecipeWindow(QMainWindow):
 
     def add_ingredient_input_row(self):
 
-        self.ingr_name_layout.addWidget(IngredientNameField())
+        self.ingr_name_layout.addWidget(IngredientNameField(parent=self, index=self.ingredient_index))
+        self.ingredient_index += 1
         self.qty_layout.addWidget(FloatField())
         self.unit_layout.addWidget(UnitField(sorted(cost.unit_list)))
 
@@ -290,7 +375,7 @@ class AddRecipeWindow(QMainWindow):
 
     def add_recipe(self):
 
-        rec_df = pd.DataFrame()
+        input_df = pd.DataFrame()
 
         columns = []
 
@@ -323,13 +408,20 @@ class AddRecipeWindow(QMainWindow):
 
         for index, col in enumerate(columns):
 
-            rec_df.insert(index, headers[index], col)
+            input_df.insert(index, headers[index], col)
 
-        rec_df.dropna(how='all')
+        input_df.dropna(how='all')
 
-        ingredient_input_df = rec_df[['ingr','qty','unit']].dropna(how='all')
+        ingredient_input_df = input_df[['ingr','qty','unit']].dropna(how='all')
 
-        yield_input_df = rec_df[['makes','size']].dropna(how='all')
+        ingredient_input_df.reset_index(inplace=True)
+
+        yield_input_df = input_df[['makes','size']].dropna(how='all')
+
+        yield_input_df.reset_index(inplace=True)
+
+        new_rec_df = pd.DataFrame([ingredient_input_df['ingr'], ingredient_input_df['qty'], 
+                                   ingredient_input_df['unit'], yield_input_df['makes'], yield_input_df['size']]).T
 
         recipe_name = self.recipe_name_field.text().lower().strip()
 
@@ -345,7 +437,7 @@ class AddRecipeWindow(QMainWindow):
             self.taken_name_dialog.exec()
             return
 
-        elif rec_df.isnull().values.all():
+        elif input_df.isnull().values.all():
 
             self.empty_recipe_dialog = InputErrorDialog('WRONG! Empty of input.')
             self.empty_recipe_dialog.exec()
@@ -377,7 +469,7 @@ class AddRecipeWindow(QMainWindow):
 
         else:
 
-            rec_df.to_csv(recipe_name + '.csv', mode='w', index=False)
+            new_rec_df.to_csv('Recipes/' + recipe_name + '.csv', mode='w', index=False)
 
             for layout in input_field_layouts:
                 input_fields = (layout.itemAt(index) for index in range(1,layout.count()))
@@ -385,6 +477,8 @@ class AddRecipeWindow(QMainWindow):
                     field.widget().clear()
             
             self.recipe_name_field.clear()
+
+            cost.main()
 
             self.success_dialog = SuccessDialog()
             self.success_dialog.exec()
@@ -398,14 +492,15 @@ class AddRecipeWindow(QMainWindow):
 
 class RecipeEditor(QMainWindow):
 
-    def __init__(self, recipe):
+    def __init__(self, recipe, parent=None):
 
-        super().__init__()
+        super().__init__(parent)
 
         self.recipe_name = recipe.name
         self.rec_df = recipe.rec_df
+        self.parent_window = parent
 
-        self.setWindowTitle('Edit ' + self.recipe_name.capitalize())
+        self.setWindowTitle('Edit ' + capwords(self.recipe_name))
         self.setWindowIcon(QIcon('Icons/cake--pencil.png'))
 
         # Recipe Name Input Area
@@ -413,7 +508,7 @@ class RecipeEditor(QMainWindow):
         self.recipe_name_header = QLabel('Change Recipe Name')
         self.recipe_name_field = QLineEdit()
         self.recipe_name_field.setFixedWidth(250)
-        self.recipe_name_field.setText(self.recipe_name.capitalize())
+        self.recipe_name_field.setText(capwords(self.recipe_name))
 
         self.recipe_name_input_area = QWidget()
         recipe_name_layout = QVBoxLayout()
@@ -421,25 +516,43 @@ class RecipeEditor(QMainWindow):
         recipe_name_layout.addWidget(self.recipe_name_field)
         self.recipe_name_input_area.setLayout(recipe_name_layout)
 
+        # Recipe Deletion Button
+
+        self.delete_recipe_button = QPushButton('delet this')
+        self.delete_recipe_button.setIcon(QIcon('Icons/fire-big.png'))
+        self.delete_recipe_button.clicked.connect(self.delete_recipe)
+
+        # Combined Name Input and Deletion Area
+
+        self.name_input_and_deletion_button_container_widget = QWidget()
+        recipe_name_and_deletion_layout = QHBoxLayout()
+        recipe_name_and_deletion_layout.addWidget(self.recipe_name_input_area)
+        recipe_name_and_deletion_layout.addWidget(self.delete_recipe_button)
+        self.name_input_and_deletion_button_container_widget.setLayout(recipe_name_and_deletion_layout)
+
         # Ingredient Edit Area
 
-        self.ingr_name_column = QWidget()
-        self.ingr_name_layout = QVBoxLayout()
-        self.ingr_name_layout.addWidget(QLabel('Ingredient Name'))
-        for k in range(len(self.rec_df['ingr'])):
-            self.ingr_name_layout.addWidget(IngredientNameField())
-        ingr_name_fields = (self.ingr_name_layout.itemAt(index) for index in range(1,self.ingr_name_layout.count())) 
-        for index, field in enumerate(ingr_name_fields):
-            field.widget().setCurrentIndex(list(sorted(cost.ingr_dict.keys())).index(self.rec_df['ingr'][index]))
-        if len(self.rec_df['ingr']) < 10:
-            for k in range(10-len(self.rec_df['ingr'])):
-                invisible_field = IngredientNameField()
-                retain = QSizePolicy()
-                retain.setRetainSizeWhenHidden(True)
-                invisible_field.setSizePolicy(retain)
-                self.ingr_name_layout.addWidget(invisible_field)
-                invisible_field.hide()
-        self.ingr_name_column.setLayout(self.ingr_name_layout)
+        try:
+            self.ingr_name_column = QWidget()
+            self.ingr_name_layout = QVBoxLayout()
+            self.ingr_name_layout.addWidget(QLabel('Ingredient Name'))
+            for k in range(1,len(self.rec_df['ingr']) + 1):
+                self.ingr_name_layout.addWidget(IngredientNameField(parent=self, index=k))
+            self.ingredient_index = len(self.rec_df['ingr']) + 1
+            ingr_name_fields = (self.ingr_name_layout.itemAt(index) for index in range(1,self.ingr_name_layout.count())) 
+            for index, field in enumerate(ingr_name_fields):
+                field.widget().setCurrentIndex(list(sorted(cost.ingr_dict.keys())).index(self.rec_df['ingr'][index]))
+            if len(self.rec_df['ingr']) < 10:
+                for k in range(10-len(self.rec_df['ingr'])):
+                    invisible_field = IngredientNameField()
+                    retain = QSizePolicy()
+                    retain.setRetainSizeWhenHidden(True)
+                    invisible_field.setSizePolicy(retain)
+                    self.ingr_name_layout.addWidget(invisible_field)
+                    invisible_field.hide()
+            self.ingr_name_column.setLayout(self.ingr_name_layout) 
+        except Exception as error:
+            print('gotcha', error) 
 
         self.qty_column = QWidget()
         self.qty_layout = QVBoxLayout()
@@ -465,8 +578,14 @@ class RecipeEditor(QMainWindow):
         for k in range(len(self.rec_df['unit'])):
             self.unit_layout.addWidget(UnitField(sorted(cost.unit_list)))
         unit_fields = (self.unit_layout.itemAt(index) for index in range(1,self.unit_layout.count())) 
-        for index, field in enumerate(unit_fields):
-            field.widget().setCurrentIndex(sorted(cost.unit_list).index(self.rec_df['unit'][index]))
+        for index, field in enumerate(unit_fields, start=1):
+            ingredient_input = self.ingr_name_layout.itemAt(index).widget().currentText()
+            unit_list = self.ingr_name_layout.itemAt(index).widget().get_units(ingredient_input)
+            field.widget().clear()
+            field.widget().addItems(sorted(unit_list))
+            field.widget().setCompleter(QCompleter(unit_list))
+            field.widget().setValidator(InputValidator(unit_list))
+            field.widget().setCurrentIndex(sorted(unit_list).index(self.rec_df['unit'][index-1]))
         if len(self.rec_df['unit']) < 10:
             for k in range(10-len(self.rec_df['unit'])):
                 invisible_field = UnitField(sorted(cost.unit_list))
@@ -475,7 +594,7 @@ class RecipeEditor(QMainWindow):
                 invisible_field.setSizePolicy(retain)
                 self.unit_layout.addWidget(invisible_field)
                 invisible_field.hide()
-        self.unit_column.setLayout(self.unit_layout)
+        self.unit_column.setLayout(self.unit_layout)   
 
         self.ingr_input_fields_container_widget = QWidget()
         ingredient_input_layout = QHBoxLayout()
@@ -604,17 +723,35 @@ class RecipeEditor(QMainWindow):
         self.central_container_widget = QWidget()
         central_layout = QVBoxLayout()
 
-        central_layout.addWidget(self.recipe_name_input_area)
+        central_layout.addWidget(self.name_input_and_deletion_button_container_widget)
         central_layout.addWidget(self.combined_input_widget)
         central_layout.addWidget(self.main_button_row)
 
         self.central_container_widget.setLayout(central_layout)
         self.setCentralWidget(self.central_container_widget)
 
+    def delete_recipe(self):
+
+        if ConfirmationDialog(parent=self).exec():
+            remove('Recipes/' + self.recipe_name + '.csv')
+            cost.main()
+            print(sorted(list(cost.rec_dict.keys())))
+            SuccessDialog(parent=self).exec()
+            rec_list = list(cost.rec_dict.keys())
+            self.parent_window.recipe_selector.clear()
+            self.parent_window.recipe_selector.addItems(sorted(rec_list))
+            self.parent_window.recipe_selector.setCompleter(QCompleter(rec_list))
+            self.parent_window.recipe_selector.setValidator(InputValidator(rec_list))
+            self.parent_window.recipe_selector.setCurrentIndex(-1)
+            self.close()
+        else:
+            return
+
     def add_ingredient_input_row(self):
 
         if self.ingredient_insertion_index < 10:
-            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField())
+            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_index))
+            self.ingredient_index += 1
             self.qty_layout.insertWidget(self.ingredient_insertion_index, FloatField())
             self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField(cost.unit_list))
             self.ingr_name_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
@@ -640,7 +777,7 @@ class RecipeEditor(QMainWindow):
     
     def save_recipe(self):
 
-        rec_df = pd.DataFrame()
+        input_df = pd.DataFrame()
 
         columns = []
 
@@ -668,18 +805,27 @@ class RecipeEditor(QMainWindow):
         elif len(columns[0]) < len(columns[3]):
              for col in columns[0:3]:
                 col.extend( [np.nan] * (len(columns[3]) - len(col)) )
-           
+
         headers = ['ingr','qty','unit','makes','size']
 
         for index, col in enumerate(columns):
 
-            rec_df.insert(index, headers[index], col)
+            input_df.insert(index, headers[index], col)
 
-        rec_df.dropna(how='all')
+        input_df.dropna(how='all')
 
-        ingredient_input_df = rec_df[['ingr','qty','unit']].dropna(how='all')
+        ingredient_input_df = input_df[['ingr','qty','unit']].dropna(how='all')
 
-        yield_input_df = rec_df[['makes','size']].dropna(how='all')
+        ingredient_input_df.reset_index(inplace=True)
+
+        yield_input_df = input_df[['makes','size']].dropna(how='all')
+
+        yield_input_df.reset_index(inplace=True)
+
+        new_rec_df = pd.DataFrame([ingredient_input_df['ingr'], ingredient_input_df['qty'], 
+                                   ingredient_input_df['unit'], yield_input_df['makes'], yield_input_df['size']]).T
+
+        print('cool new ', new_rec_df)
 
         new_recipe_name = self.recipe_name_field.text().lower().strip()
 
@@ -689,7 +835,7 @@ class RecipeEditor(QMainWindow):
             self.no_name_dialog.exec()
             return
 
-        elif rec_df.isnull().values.all():
+        elif input_df.isnull().values.all():
 
             self.empty_recipe_dialog = InputErrorDialog('WRONG! Empty of input.')
             self.empty_recipe_dialog.exec()
@@ -722,14 +868,18 @@ class RecipeEditor(QMainWindow):
         else:
 
             try:
-                remove(self.recipe_name + '.csv')
+                remove('Recipes/' + self.recipe_name + '.csv')
             except OSError as error:
                 print(error)
 
-            rec_df.to_csv(new_recipe_name + '.csv', mode='w', index=False)
+            new_rec_df.to_csv('Recipes/' + new_recipe_name + '.csv', mode='w', index=False)
 
+            cost.main()
+            print('In save_recipe:')
+            print(sorted(list(cost.rec_dict.keys())))
             self.success_dialog = SuccessDialog()
             self.success_dialog.exec()
+            self.close()
 
             return
         
@@ -750,9 +900,11 @@ class EditRecipesWindow(QMainWindow):
         self.setWindowIcon(QIcon('Icons/cake--pencil.png'))
 
         self.recipe_selector = QComboBox()
-        self.recipe_selector.addItems(cost.rec_dict.keys())
+        self.recipe_selector.addItems(sorted(cost.rec_dict.keys()))
         self.recipe_selector.setEditable(True)
         self.recipe_selector.setCompleter(QCompleter(cost.rec_dict.keys()))
+        self.recipe_selector.setValidator(InputValidator(cost.rec_dict.keys()))
+        self.recipe_selector.setCurrentIndex(-1)
 
         self.main_button_row = QWidget()
         main_button_layout = QHBoxLayout()
@@ -779,7 +931,7 @@ class EditRecipesWindow(QMainWindow):
 
         selected_recipe = cost.rec_dict[self.recipe_selector.currentText()]
 
-        self.recipe_editor = RecipeEditor(selected_recipe)
+        self.recipe_editor = RecipeEditor(recipe=selected_recipe, parent=self)
         self.recipe_editor.show()
 
     def close_window(self):
@@ -838,16 +990,20 @@ class NavigationWindow(QMainWindow):
 
     def generate_add_recipe_window(self):
 
+        cost.main()
         self.add_recipe_window = AddRecipeWindow()
         self.add_recipe_window.show()
 
     def generate_edit_recipes_window(self):
         
+        cost.main()
+        print('In generate edit recipes window:', cost.rec_dict.keys())
         self.edit_recipes_window = EditRecipesWindow()
         self.edit_recipes_window.show()        
 
     def generate_output_window(self):
 
+        cost.main()
         self.output_window = output_window.SelectionWindow()
         self.output_window.show()
 
