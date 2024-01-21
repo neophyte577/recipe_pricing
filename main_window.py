@@ -1,5 +1,3 @@
-
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
 import ingredients_window, recipes_window, output_window
@@ -16,7 +14,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Main Window')
-        self.setWindowIcon(QIcon('Icons/cutleries.png'))
+        self.setWindowIcon(QIcon('Icons/cutlery.png'))
         self.setFixedSize(250,135)
 
         hlayout = QHBoxLayout()

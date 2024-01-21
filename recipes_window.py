@@ -1,4 +1,3 @@
-
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QIcon, QValidator, QDoubleValidator
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QDialog, QLabel, QCompleter, QComboBox, QLineEdit, QPushButton, QVBoxLayout, 
@@ -825,8 +824,6 @@ class RecipeEditor(QMainWindow):
         new_rec_df = pd.DataFrame([ingredient_input_df['ingr'], ingredient_input_df['qty'], 
                                    ingredient_input_df['unit'], yield_input_df['makes'], yield_input_df['size']]).T
 
-        print('cool new ', new_rec_df)
-
         new_recipe_name = self.recipe_name_field.text().lower().strip()
 
         if new_recipe_name == '':
@@ -875,8 +872,12 @@ class RecipeEditor(QMainWindow):
             new_rec_df.to_csv('Recipes/' + new_recipe_name + '.csv', mode='w', index=False)
 
             cost.main()
-            print('In save_recipe:')
-            print(sorted(list(cost.rec_dict.keys())))
+            rec_list = list(cost.rec_dict.keys())
+            self.parent_window.recipe_selector.clear()
+            self.parent_window.recipe_selector.addItems(sorted(rec_list))
+            self.parent_window.recipe_selector.setCompleter(QCompleter(rec_list))
+            self.parent_window.recipe_selector.setValidator(InputValidator(rec_list))
+            self.parent_window.recipe_selector.setCurrentIndex(-1)
             self.success_dialog = SuccessDialog()
             self.success_dialog.exec()
             self.close()
@@ -898,6 +899,7 @@ class EditRecipesWindow(QMainWindow):
 
         self.setWindowTitle('Edit Recipes')
         self.setWindowIcon(QIcon('Icons/cake--pencil.png'))
+        self.setFixedWidth(275)
 
         self.recipe_selector = QComboBox()
         self.recipe_selector.addItems(sorted(cost.rec_dict.keys()))
@@ -909,13 +911,13 @@ class EditRecipesWindow(QMainWindow):
         self.main_button_row = QWidget()
         main_button_layout = QHBoxLayout()
 
-        self.add_ingr_button = QPushButton('Edit Recipe')
-        self.add_ingr_button.clicked.connect(self.edit_recipe)
+        self.edit_recipe_button = QPushButton('Edit Recipe')
+        self.edit_recipe_button.clicked.connect(self.edit_recipe)
 
         self.close_button = QPushButton('Sayonara')
         self.close_button.clicked.connect(self.close_window)
 
-        main_button_layout.addWidget(self.add_ingr_button)
+        main_button_layout.addWidget(self.edit_recipe_button)
         main_button_layout.addWidget(self.close_button)
         self.main_button_row.setLayout(main_button_layout)
 
@@ -997,7 +999,6 @@ class NavigationWindow(QMainWindow):
     def generate_edit_recipes_window(self):
         
         cost.main()
-        print('In generate edit recipes window:', cost.rec_dict.keys())
         self.edit_recipes_window = EditRecipesWindow()
         self.edit_recipes_window.show()        
 
