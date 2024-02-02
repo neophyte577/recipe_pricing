@@ -21,13 +21,13 @@ class MainWindow(QMainWindow):
 
         vlayout = QVBoxLayout()
 
-        self.ingredients_button = QPushButton('Ingredientes')
+        self.ingredients_button = QPushButton('Ingredients')
         self.ingredients_button.clicked.connect(self.generate_ingredients_window)
 
-        self.recipes_button = QPushButton('Recetas')
+        self.recipes_button = QPushButton('Recipes')
         self.recipes_button.clicked.connect(self.generate_recipes_window)
 
-        self.pricing_button = QPushButton('Precios')
+        self.pricing_button = QPushButton('Pricing')
         self.pricing_button.pressed.connect(self.generate_output_window)
 
         vlayout.addStretch()

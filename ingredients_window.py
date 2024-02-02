@@ -48,14 +48,15 @@ class TableModel(QAbstractTableModel):
 
     def columnCount(self, _):
         return self.df.shape[1]
-
+    
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return str(self.df.columns[section])
             if orientation == Qt.Vertical:
                 return str(self.df.index[section])
-            
+    
+    '''
     def flags(self, _):
         return Qt.ItemIsSelectable|Qt.ItemIsEnabled|Qt.ItemIsEditable
     
@@ -65,7 +66,8 @@ class TableModel(QAbstractTableModel):
 
             self.df.iloc[index.row(),index.column()] = value
 
-            return True  
+            return True 
+    ''' 
         
 # General use dialogs
 
@@ -293,10 +295,12 @@ class AddIngredientWindow(QMainWindow):
 
                     new_ingr_row.append(field.currentText())
 
-            pd.DataFrame([new_ingr_row]).to_csv('Ingredients.csv', mode='a', header=False, index=False)
+            pd.DataFrame([new_ingr_row]).to_csv('Ingredients/ingredients.csv', mode='a', header=False, index=False)
 
             for field in self.input_fields:
                 field.clear()
+            self.unit_field.setCurrentIndex(-1)
+            self.each_unit_field.setCurrentIndex(-1)
 
             cost.main()
 
@@ -524,7 +528,8 @@ class IngredientEditor(QMainWindow):
 
         ingredient_name = self.name_field.text().strip().lower()
 
-        other_ingredients = list(cost.ingr_dict.keys()).remove(ingredient_name)
+        other_ingredients = list(cost.ingr_dict.keys())
+        other_ingredients.remove(ingredient_name)
             
         if any((field.text().strip() == '') for field in self.input_fields[0:3]) or (self.unit_field.currentText().strip() == ''):
 
@@ -553,7 +558,7 @@ class IngredientEditor(QMainWindow):
 
             new_ingr_df[new_ingr_df['name']==self.ingredient_name] = new_ingr_row
 
-            new_ingr_df.to_csv('Ingredients.csv', mode='w', header=True, index=False)
+            new_ingr_df.to_csv('Ingredients/ingredients.csv', mode='w', header=True, index=False)
 
             for field in self.input_fields:
                 field.clear()
@@ -570,7 +575,7 @@ class IngredientEditor(QMainWindow):
 
             new_ingr_df = new_ingr_df[new_ingr_df['name'] != self.ingredient_name]
 
-            new_ingr_df.to_csv('Ingredients.csv', mode='w', header=True, index=False)
+            new_ingr_df.to_csv('Ingredients/ingredients.csv', mode='w', header=True, index=False)
 
             for field in self.input_fields:
                 field.clear()
@@ -593,9 +598,9 @@ class IngredientEditor(QMainWindow):
     def close_window(self):
 
         self.close()
-    
 
-# View Ingredients Window
+
+# View Ingredients window
 
 class ViewIngredientsWindow(QMainWindow):
 
@@ -605,6 +610,31 @@ class ViewIngredientsWindow(QMainWindow):
 
         self.setWindowTitle('View Ingredients')
         self.setWindowIcon(QIcon('Icons/eye.png'))
+        self.setFixedSize(900,600)
+        
+        self.table = cost.ingr_df.copy(deep=True)
+        self.table.set_index('name', inplace=True)
+        self.table.columns = ['Cost', 'Quantity', 'Unit', 'Density', 'Each Quantity', 'Each Unit', 'Product Code']
+        self.table.sort_index(ascending=True, inplace=True)
+        self.table.fillna('', inplace=True)
+
+        self.ingredients_table = QTableView()
+        self.model = TableModel(self.table)
+        self.ingredients_table.setModel(self.model)
+
+        self.setCentralWidget(self.ingredients_table)
+ 
+'''
+# View/Edit Ingredients Window
+
+class ViewAndEditIngredientsWindow(QMainWindow):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setWindowTitle('Edit Ingredients')
+        self.setWindowIcon(QIcon('Icons/flask--pencil.png'))
         self.setFixedSize(900,600)
 
         # Viewing Table
@@ -652,7 +682,7 @@ class ViewIngredientsWindow(QMainWindow):
 
             new_ingr_df.columns = ['name','cost','qty','unit','density','each_qty','each_unit','code']
 
-            new_ingr_df.to_csv('Ingredients.csv', mode='w', index=False, header=True)
+            new_ingr_df.to_csv('Ingredients/ingredients.csv', mode='w', index=False, header=True)
 
             cost.main()
 
@@ -664,7 +694,8 @@ class ViewIngredientsWindow(QMainWindow):
     def close_window(self):
 
         self.close()
-
+'''
+        
 # Remove Ingredients window and associated dialog
 
 class RemoveIngredientsWindow(QMainWindow):
@@ -723,7 +754,7 @@ class RemoveIngredientsWindow(QMainWindow):
             if ConfirmationDialog(self).exec():
                 ingr_df = cost.ingr_df.copy(deep=True)
                 ingr_df.drop(ingr_df[ingr_df['name']==self.ingredient_selector.currentText()].index, inplace=True)
-                ingr_df.to_csv('Ingredients.csv', mode='w', index=False)
+                ingr_df.to_csv('Ingredients/ingredients.csv', mode='w', index=False)
                 self.ingredient_selector.removeItem(self.ingredient_selector.currentIndex())
                 self.ingredient_selector.setCurrentIndex(-1)
                 cost.main()

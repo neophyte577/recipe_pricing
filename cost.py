@@ -543,7 +543,7 @@ def main():
         
         global ingr_df
 
-        ingr_df = ingr_df_cleaner(pd.read_csv('Ingredients.csv'))
+        ingr_df = ingr_df_cleaner(pd.read_csv('Ingredients/Ingredients.csv'))
         
         ingr_dict.update(ingr_dict_constructor(ingr_df))
 
@@ -576,83 +576,6 @@ def main():
         print(traceback.format_exc())
         print('NO ITEMS!!!1')
     ########################################################
-
-    #output_template('cajun salmon')
-
-
-'''
-def main_city_chef():
-
-    try:
-        
-        ingredients_loc = 'C:/Users/Paul/Documents/City Chef/Ingredients'
-
-        ingredients_directory = os.fsencode(ingredients_loc)
-
-        ingr_dfs = []
-
-        for file in os.listdir(ingredients_directory):
-            filename = os.fsdecode(file)
-            print(ingredients_loc + '/' + filename)
-            df = pd.read_csv(ingredients_loc + '/' + filename)
-            ingr_dfs.append(df)
-        
-        global ingr_df
-
-        ingr_df = ingr_df_cleaner(pd.concat(ingr_dfs, ignore_index=True))
-        
-        ingr_dict.update(ingr_dict_constructor(ingr_df))
-
-    except Exception as error:
-        print(error)
-        print('NO INGREDIENTS!!!1')
-        print('Better luck next time')
-        exit()
-
-    try:
-
-        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Ingredient Recipes'
-
-        rec_df_dict = get_recipes(recipes_loc)
-
-        rec_dict = rec_dict_constructor(rec_df_dict)
-            
-        rec_dict.update(rec_dict)
-
-    except Exception as error:
-        print(error)
-        print(traceback.format_exc())
-        print('NO INGREDIENT RECIPES!!!1')
-
-    try:
-
-        recipes_loc = 'C:/Users/Paul/Documents/City Chef/Recipes'
-
-        rec_df_dict = get_recipes(recipes_loc)
-
-        rec_dict = rec_dict_constructor(rec_df_dict)
-            
-        rec_dict.update(rec_dict)
-
-    except Exception as error:
-        print(error)
-        print(traceback.format_exc())
-        print('NO RECIPES!!!1')
-        print('Better luck next time')
-        exit()
-
-    #######################################################
-    try:
-        item_dict.update(item_dict_constructor(rec_dict))
-    except Exception as error:
-        print(error)
-        print(traceback.format_exc())
-        print('NO ITEMS!!!1')
-    ########################################################
-
-    #output_template('cajun salmon')
-'''
-
 
 start = time()
 
