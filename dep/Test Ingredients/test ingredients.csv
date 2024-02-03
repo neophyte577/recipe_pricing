@@ -1,0 +1,4 @@
+name,cost,qty,unit,density,each_qty,each_unit
+test_ingr_1,1,1,ea,,,
+test_ingr_2,1,1,g,100,2,oz
+test_ingr_3,1,1,ea,100,2,c
