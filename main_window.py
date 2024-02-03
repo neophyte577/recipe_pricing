@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         vlayout.addStretch()
 
         logo = QLabel()
-        pixmap = QPixmap('Icons/chef_logo.png')
+        pixmap = QPixmap(cost.resolve_path('Icons/chef_logo.png'))
         logo.setPixmap(pixmap)
 
         container_widget = QWidget()

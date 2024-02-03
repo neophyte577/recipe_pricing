@@ -3,7 +3,7 @@ simplefilter(action='ignore', category=Warning)
 import numpy as np
 import pandas as pd
 import funcy as fc
-import os
+import os, sys
 import traceback
 from time import time
 
@@ -537,13 +537,28 @@ def output_template(name, size='portion', scale_factor=3):
     return output
 
 
+def resolve_path(relative_path):
+
+    try:
+        root_path = sys._MEIPASS
+        
+    except Exception:
+        root_path = os.path.abspath(".")
+
+    path = os.path.join(root_path, relative_path)
+
+    return path
+
+
 def main():
 
     try:
         
         global ingr_df
 
-        ingr_df = ingr_df_cleaner(pd.read_csv('Ingredients/Ingredients.csv'))
+        ingredients_path = resolve_path('Ingredients/ingredients.csv')
+
+        ingr_df = ingr_df_cleaner(pd.read_csv(ingredients_path))
         
         ingr_dict.update(ingr_dict_constructor(ingr_df))
 
@@ -555,7 +570,9 @@ def main():
 
     try:
 
-        recipes_loc = 'Recipes'
+        #recipes_loc = 'Recipes'
+
+        recipes_loc = resolve_path('Recipes')
 
         rec_df_dict = get_recipes(recipes_loc)
 
