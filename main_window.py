@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Main Window')
-        self.setWindowIcon(QIcon('Icons/cutlery.png'))
+        self.setWindowIcon(QIcon('dep/Icons/cutlery.png'))
         self.setFixedSize(250,135)
 
         hlayout = QHBoxLayout()
@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         vlayout.addStretch()
 
         logo = QLabel()
-        pixmap = QPixmap(cost.resolve_path('Icons/chef_logo.png'))
+        pixmap = QPixmap(cost.resolve_path('dep/Icons/main_logo.png'))
         logo.setPixmap(pixmap)
 
         container_widget = QWidget()

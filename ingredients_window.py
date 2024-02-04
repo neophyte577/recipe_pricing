@@ -78,7 +78,7 @@ class SuccessDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('You did it!')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/tick.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/tick.png')))
 
         self.button = QDialogButtonBox(QDialogButtonBox.Ok)
         self.button.button(QDialogButtonBox.Ok).setText('Cool')
@@ -97,7 +97,7 @@ class ConfirmationDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('No Cap?')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/exclamation--frame.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/exclamation--frame.png')))
 
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
@@ -118,7 +118,7 @@ class InputErrorDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('Zoinks!')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/dummy.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/dummy.png')))
 
         self.button = QDialogButtonBox(QDialogButtonBox.Ok)
         self.button.button(QDialogButtonBox.Ok).setText('Ard')
@@ -139,7 +139,7 @@ class AddIngredientWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Add Ingredient')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/flask--plus.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/flask--plus.png')))
 
         # Input Fields
 
@@ -295,7 +295,7 @@ class AddIngredientWindow(QMainWindow):
 
                     new_ingr_row.append(field.currentText())
 
-            pd.DataFrame([new_ingr_row]).to_csv(cost.resolve_path('Ingredients/ingredients.csv'), mode='a', header=False, index=False)
+            pd.DataFrame([new_ingr_row]).to_csv(cost.resolve_path('dep/Ingredients/ingredients.csv'), mode='a', header=False, index=False)
 
             for field in self.input_fields:
                 field.clear()
@@ -321,7 +321,7 @@ class EditIngredientsWindow(QMainWindow):
         self.ingredient_editor = None
 
         self.setWindowTitle('Edit Ingredients')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/flask--pencil.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/flask--pencil.png')))
         self.setFixedWidth(275)
 
         self.ingredient_selector = QComboBox()
@@ -356,8 +356,8 @@ class EditIngredientsWindow(QMainWindow):
 
         selected_ingredient = self.ingredient_selector.currentText().strip().lower()
 
-        self.recipe_editor = IngredientEditor(ingredient_name=selected_ingredient, parent=self)
-        self.recipe_editor.show()
+        self.ingredient_editor = IngredientEditor(ingredient_name=selected_ingredient, parent=self)
+        self.ingredient_editor.show()
 
     def close_window(self):
 
@@ -381,7 +381,7 @@ class IngredientEditor(QMainWindow):
         self.parent_window = parent
 
         self.setWindowTitle('Edit ' + capwords(self.ingredient_name))
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/flask--pencil.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/flask--pencil.png')))
 
         # Input Fields
 
@@ -502,7 +502,7 @@ class IngredientEditor(QMainWindow):
         self.delete_ingr_button = QPushButton('Delete Ingredient')
         self.delete_ingr_button.clicked.connect(self.delete_ingredient)
 
-        self.close_button = QPushButton('Au Revoir')
+        self.close_button = QPushButton('Ciao')
         self.close_button.clicked.connect(self.close_window)
 
         button_row_layout.addWidget(self.save_ingr_button)
@@ -558,7 +558,7 @@ class IngredientEditor(QMainWindow):
 
             new_ingr_df[new_ingr_df['name']==self.ingredient_name] = new_ingr_row
 
-            new_ingr_df.to_csv(cost.resolve_path('Ingredients/ingredients.csv'), mode='w', header=True, index=False)
+            new_ingr_df.to_csv(cost.resolve_path('dep/Ingredients/ingredients.csv'), mode='w', header=True, index=False)
 
             for field in self.input_fields:
                 field.clear()
@@ -577,7 +577,7 @@ class IngredientEditor(QMainWindow):
 
             new_ingr_df = new_ingr_df[new_ingr_df['name'] != self.ingredient_name]
 
-            new_ingr_df.to_csv(cost.resolve_path('Ingredients/ingredients.csv'), mode='w', header=True, index=False)
+            new_ingr_df.to_csv(cost.resolve_path('dep/Ingredients/ingredients.csv'), mode='w', header=True, index=False)
 
             for field in self.input_fields:
                 field.clear()
@@ -586,7 +586,7 @@ class IngredientEditor(QMainWindow):
 
             SuccessDialog(parent=self).exec()
 
-            ingr_list = list(cost.rec_dict.keys())
+            ingr_list = list(cost.ingr_dict.keys())
             self.parent_window.ingredient_selector.clear()
             self.parent_window.ingredient_selector.addItems(sorted(ingr_list))
             self.parent_window.ingredient_selector.setCompleter(QCompleter(ingr_list))
@@ -611,7 +611,7 @@ class ViewIngredientsWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('View Ingredients')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/eye.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/eye.png')))
         self.setFixedSize(900,600)
         
         self.table = cost.ingr_df.copy(deep=True)
@@ -636,7 +636,7 @@ class ViewAndEditIngredientsWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Edit Ingredients')
-        self.setWindowIcon(QIcon('Icons/flask--pencil.png'))
+        self.setWindowIcon(QIcon('dep/Icons/flask--pencil.png'))
         self.setFixedSize(900,600)
 
         # Viewing Table
@@ -707,7 +707,7 @@ class RemoveIngredientsWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Remove Ingredients')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/flask--minus.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/flask--minus.png')))
         self.setFixedWidth(275)
 
         # Selector
@@ -784,7 +784,7 @@ class NavigationWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Ingredients')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/flask.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/flask.png')))
         self.setFixedSize(300,155)
         
         hlayout = QHBoxLayout()
@@ -809,7 +809,7 @@ class NavigationWindow(QMainWindow):
         central_layout.addWidget(self.remove_ingr_button)
 
         icon = QLabel()
-        pixmap = QPixmap(cost.resolve_path('Icons/ingredients_icon.png'))
+        pixmap = QPixmap(cost.resolve_path('dep/Icons/ingredients_icon.png'))
         icon.setPixmap(pixmap)
                
         container_widget = QWidget()

@@ -65,7 +65,7 @@ class SelectionWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Price Which?')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/currency.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/currency.png')))
         self.setFixedSize(250,200)
         self.rec_dict = cost.rec_dict
 

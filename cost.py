@@ -556,7 +556,7 @@ def main():
         
         global ingr_df
 
-        ingredients_path = resolve_path('Ingredients/ingredients.csv')
+        ingredients_path = resolve_path('dep/Ingredients/ingredients.csv')
 
         ingr_df = ingr_df_cleaner(pd.read_csv(ingredients_path))
         
@@ -572,7 +572,7 @@ def main():
 
         #recipes_loc = 'Recipes'
 
-        recipes_loc = resolve_path('Recipes')
+        recipes_loc = resolve_path('dep/Recipes')
 
         rec_df_dict = get_recipes(recipes_loc)
 

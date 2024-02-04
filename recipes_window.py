@@ -36,7 +36,7 @@ class SuccessDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('You did it!')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/tick.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/tick.png')))
 
         self.button = QDialogButtonBox(QDialogButtonBox.Ok)
         self.button.button(QDialogButtonBox.Ok).setText('Cool')
@@ -58,7 +58,7 @@ class ConfirmationDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('No Cap?')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/exclamation--frame.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/exclamation--frame.png')))
 
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
@@ -80,7 +80,7 @@ class InputErrorDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle('Ruh Roh!')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/dummy.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/dummy.png')))
 
         self.button = QDialogButtonBox(QDialogButtonBox.Ok)
         self.button.button(QDialogButtonBox.Ok).setText('Mmk')
@@ -192,7 +192,7 @@ class AddRecipeWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Add Recipe')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/cake--plus.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/cake--plus.png')))
 
         # Recipe Name Input Area
 
@@ -243,7 +243,7 @@ class AddRecipeWindow(QMainWindow):
         self.ingredient_scroll_area.setWidgetResizable(True)
 
         self.add_ingr_row_button = QPushButton('Add Another Ingredient')
-        self.add_ingr_row_button.setIcon(QIcon(cost.resolve_path('Icons/plus-button.png')))
+        self.add_ingr_row_button.setIcon(QIcon(cost.resolve_path('dep/Icons/plus-button.png')))
         self.add_ingr_row_button.setFixedWidth(160)
         self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
 
@@ -295,7 +295,7 @@ class AddRecipeWindow(QMainWindow):
         self.yield_scroll_area.setWidgetResizable(True)
 
         self.add_yield_row_button = QPushButton('Add Another Yield')
-        self.add_yield_row_button.setIcon(QIcon(cost.resolve_path('Icons/plus-button.png')))
+        self.add_yield_row_button.setIcon(QIcon(cost.resolve_path('dep/Icons/plus-button.png')))
         self.add_yield_row_button.setFixedWidth(160)
         self.yield_insertion_index = 4
         self.add_yield_row_button.clicked.connect(self.add_yield_input_row)
@@ -468,7 +468,7 @@ class AddRecipeWindow(QMainWindow):
 
         else:
 
-            new_rec_df.to_csv(cost.resolve_path('Recipes') + '/' + recipe_name + '.csv', mode='w', index=False)
+            new_rec_df.to_csv(cost.resolve_path('dep/Recipes') + '/' + recipe_name + '.csv', mode='w', index=False)
 
             for layout in input_field_layouts:
                 input_fields = (layout.itemAt(index) for index in range(1,layout.count()))
@@ -500,7 +500,7 @@ class RecipeEditor(QMainWindow):
         self.parent_window = parent
 
         self.setWindowTitle('Edit ' + capwords(self.recipe_name))
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/cake--pencil.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/cake--pencil.png')))
 
         # Recipe Name Input Area
 
@@ -518,7 +518,7 @@ class RecipeEditor(QMainWindow):
         # Recipe Deletion Button
 
         self.delete_recipe_button = QPushButton('delet this')
-        self.delete_recipe_button.setIcon(QIcon(cost.resolve_path('Icons/fire-big.png')))
+        self.delete_recipe_button.setIcon(QIcon(cost.resolve_path('dep/Icons/fire-big.png')))
         self.delete_recipe_button.clicked.connect(self.delete_recipe)
 
         # Combined Name Input and Deletion Area
@@ -608,7 +608,7 @@ class RecipeEditor(QMainWindow):
         self.ingredient_scroll_area.setWidgetResizable(True)
 
         self.add_ingr_row_button = QPushButton('Add Another Ingredient')
-        self.add_ingr_row_button.setIcon(QIcon(cost.resolve_path('Icons/plus-button.png')))
+        self.add_ingr_row_button.setIcon(QIcon(cost.resolve_path('dep/Icons/plus-button.png')))
         self.add_ingr_row_button.setFixedWidth(160)
         self.add_ingr_row_button.clicked.connect(self.add_ingredient_input_row)
         self.ingredient_insertion_index = len(self.rec_df['ingr']) + 1
@@ -671,7 +671,7 @@ class RecipeEditor(QMainWindow):
         self.yield_scroll_area.setWidgetResizable(True)
 
         self.add_yield_row_button = QPushButton('Add Another Yield')
-        self.add_yield_row_button.setIcon(QIcon(cost.resolve_path('Icons/plus-button.png')))
+        self.add_yield_row_button.setIcon(QIcon(cost.resolve_path('dep/Icons/plus-button.png')))
         self.add_yield_row_button.setFixedWidth(160)
         self.yield_insertion_index = len(makes_data) + 1
         self.add_yield_row_button.clicked.connect(self.add_yield_input_row)
@@ -732,9 +732,8 @@ class RecipeEditor(QMainWindow):
     def delete_recipe(self):
 
         if ConfirmationDialog(parent=self).exec():
-            remove(cost.resolve_path('Recipes') + '/' + self.recipe_name + '.csv')
+            remove(cost.resolve_path('dep/Recipes') + '/' + self.recipe_name + '.csv')
             cost.main()
-            print(sorted(list(cost.rec_dict.keys())))
             SuccessDialog(parent=self).exec()
             rec_list = list(cost.rec_dict.keys())
             self.parent_window.recipe_selector.clear()
@@ -865,11 +864,11 @@ class RecipeEditor(QMainWindow):
         else:
 
             try:
-                remove(cost.resolve_path('Recipes') + '/' + self.recipe_name + '.csv')
+                remove(cost.resolve_path('dep/Recipes') + '/' + self.recipe_name + '.csv')
             except OSError as error:
                 print(error)
 
-            new_rec_df.to_csv(cost.resolve_path('Recipes') + '/' + new_recipe_name + '.csv', mode='w', index=False)
+            new_rec_df.to_csv(cost.resolve_path('dep/Recipes') + '/' + new_recipe_name + '.csv', mode='w', index=False)
 
             cost.main()
             rec_list = list(cost.rec_dict.keys())
@@ -898,7 +897,7 @@ class EditRecipesWindow(QMainWindow):
         self.recipe_editor = None
 
         self.setWindowTitle('Edit Recipes')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/cake--pencil.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/cake--pencil.png')))
         self.setFixedWidth(275)
 
         self.recipe_selector = QComboBox()
@@ -956,7 +955,7 @@ class NavigationWindow(QMainWindow):
         self.add_recipe_window, self.edit_recipes_window, self.output_window = None, None, None
 
         self.setWindowTitle('Recipes')
-        self.setWindowIcon(QIcon(cost.resolve_path('Icons/cake.png')))
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/cake.png')))
         self.setFixedSize(275,120)
 
         hlayout = QHBoxLayout()
@@ -977,7 +976,7 @@ class NavigationWindow(QMainWindow):
         vlayout.addWidget(self.price_recipe_button)
 
         icon = QLabel()
-        icon.setPixmap(QPixmap(cost.resolve_path('Icons/recipe_icon.png')))
+        icon.setPixmap(QPixmap(cost.resolve_path('dep/Icons/recipe_icon.png')))
                
         container_widget = QWidget()
         container_widget.setLayout(vlayout)
