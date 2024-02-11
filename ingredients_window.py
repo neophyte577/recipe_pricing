@@ -582,6 +582,8 @@ class IngredientEditor(QMainWindow):
             for field in self.input_fields:
                 field.clear()
 
+            del cost.ingr_dict[self.ingredient_name]
+            
             cost.main()
 
             SuccessDialog(parent=self).exec()
@@ -756,11 +758,16 @@ class RemoveIngredientsWindow(QMainWindow):
             if ConfirmationDialog(self).exec():
                 ingr_df = cost.ingr_df.copy(deep=True)
                 ingr_df.drop(ingr_df[ingr_df['name']==self.ingredient_selector.currentText()].index, inplace=True)
-                ingr_df.to_csv('Ingredients/ingredients.csv', mode='w', index=False)
-                self.ingredient_selector.removeItem(self.ingredient_selector.currentIndex())
-                self.ingredient_selector.setCurrentIndex(-1)
+                ingr_df.to_csv(cost.resolve_path('dep/Ingredients/ingredients.csv'), mode='w', index=False)
+                del cost.ingr_dict[self.ingredient_selector.currentText()]
                 cost.main()
                 SuccessDialog(self).exec()
+                ingr_list = list(cost.ingr_dict.keys())
+                self.ingredient_selector.clear()
+                self.ingredient_selector.addItems(sorted(ingr_list))
+                self.ingredient_selector.setCompleter(QCompleter(ingr_list))
+                self.ingredient_selector.setValidator(InputValidator(ingr_list))
+                self.ingredient_selector.setCurrentIndex(-1)
             else:
                 return
             
