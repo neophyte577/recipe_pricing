@@ -3,6 +3,7 @@ from PySide6.QtGui import QPixmap, QValidator, QDoubleValidator, QIcon
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLineEdit, QLabel, QComboBox, QCompleter, QPushButton, QVBoxLayout, 
                                QScrollArea, QHBoxLayout, QTableView, QDialog, QDialogButtonBox)
 from string import capwords
+import numpy as np
 import pandas as pd
 import cost
 
@@ -526,19 +527,20 @@ class IngredientEditor(QMainWindow):
 
     def save_ingredient(self):
 
-        ingredient_name = self.name_field.text().strip().lower()
+        new_ingredient_name = self.name_field.text().strip().lower()
 
         other_ingredients = list(cost.ingr_dict.keys())
-        other_ingredients.remove(ingredient_name)
+        other_ingredients.remove(self.ingredient_name)
             
         if any((field.text().strip() == '') for field in self.input_fields[0:3]) or (self.unit_field.currentText().strip() == ''):
 
             InputErrorDialog(parent=self, message='WRONG! Needs more input.').exec()
             return
         
-        elif ingredient_name in other_ingredients:
+        elif new_ingredient_name in other_ingredients:
 
-            InputErrorDialog(parent=self, message='WRONG! ' + ingredient_name + ' is already an ingredient.').exec()
+            InputErrorDialog(parent=self, message='WRONG! ' + new_ingredient_name + ' is already an ingredient.').exec()
+            return
         
         else:
 
@@ -556,17 +558,25 @@ class IngredientEditor(QMainWindow):
 
                     new_ingr_row.append(field.currentText()) 
 
-            new_ingr_df[new_ingr_df['name']==self.ingredient_name] = new_ingr_row
+            new_ingr_df = pd.concat([new_ingr_df[new_ingr_df['name'] != self.ingredient_name], pd.DataFrame(data=np.array([new_ingr_row]), columns=new_ingr_df.columns.to_list())])
 
             new_ingr_df.to_csv(cost.resolve_path('dep/Ingredients/ingredients.csv'), mode='w', header=True, index=False)
 
             for field in self.input_fields:
                 field.clear()
 
+            del cost.ingr_dict[self.ingredient_name]
+
             cost.main()
 
             SuccessDialog(self).exec()
 
+            ingr_list = list(cost.ingr_dict.keys())
+            self.parent_window.ingredient_selector.clear()
+            self.parent_window.ingredient_selector.addItems(sorted(ingr_list))
+            self.parent_window.ingredient_selector.setCompleter(QCompleter(ingr_list))
+            self.parent_window.ingredient_selector.setValidator(InputValidator(ingr_list))
+            self.parent_window.ingredient_selector.setCurrentIndex(-1)
             self.close()
 
     def delete_ingredient(self):
