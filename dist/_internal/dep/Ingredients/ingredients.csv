@@ -164,9 +164,7 @@ star anise,29.1,1.0,lb,152.0,0.2,g,USF6313999
 sugar,27.34,25.0,lb,202.0,,,
 sweet potato,26.2,40.0,lb,142.0,4.6,oz,USF271197
 tabasco,34.44,48.0,floz,230.0,,,
-"tarragon, fresh",7.94,4.0,oz,,,,
 "tea, black",28.94,150.0,ea,,,,USF2982790
-test_ingr_1,1.0,1.0,ea,,,,
 test_ingr_2,1.0,1.0,g,100.0,2.0,oz,
 "thyme, dry",40.26,33.0,oz,38.0,,,
 "thyme, fresh",10.98,8.0,oz,,0.0227272727272727,oz,
@@ -194,3 +192,17 @@ marinara,1.18,1.0,lb,257.0,,,4352191
 "cheese, mozzarella fresh",29.04,6.0,lb,225.0,,,USF4942603
 arugula,11.26,2.0,lb,20.0,,,USF9546982
 "arugula, 11oz",5.49,1.0,ea,20.0,,,Safeway
+"pineapple chunks, frozen",45.25,20.0,lb,259.0,,,USF2210847
+coconut cream,11.38,57.0,oz,240.0,,,RDP2540028
+"lettuce, iceberg",0.08,1.0,oz,60.0,,,USF5326426
+"tomato, large",0.12,1.0,oz,254.0,,,USF1331339
+baked beans,0.07,1.0,oz,275.0,,,USF8056053
+"corn,  kernel",0.09,2.0,oz,175.0,,,USF4217162
+test_ingr_1,1.0,1.0,ea,,,,
+creme fraiche,5.9,1.0,lb,237.0,,,8645090
+"tarragon, fresh",7.94,4.0,oz,10.0,,,
+"tarragon, dry",17.31,4.0,oz,30.0,,,USF760538
+port wine,0.39,1.0,floz,250.0,,,Safeway
+asparagus,0.32,1.0,oz,138.0,62.5,g,USF5705694
+"parsley, fresh",0.32,1.0,oz,60.0,,,USF7326432
+"cheese, gruyere shredded",68.12,10.0,lb,118.0,,,USF9204425
