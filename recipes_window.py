@@ -122,9 +122,13 @@ class IngredientNameField(QComboBox):
             except AttributeError:
                 pass
             
-            if cost.ingr_dict[self.currentText()].density != np.pi:
-                units = cost.unit_list
-                return units
+            if ingredient.density != np.pi:
+                if ingredient.each_list != []:
+                    units = cost.unit_list
+                    return units
+                else:
+                    units = list(cost.weight_dict.keys()) + list(cost.vol_dict.keys())
+                    return units
             else:
                 if cost.ingr_dict[self.currentText()].unit in cost.weight_dict.keys():
                     units = list(cost.weight_dict.keys())
@@ -147,8 +151,6 @@ class IngredientNameField(QComboBox):
         else:
             print(input)
 
-        
-
     def update_unit_field(self):
 
         self.units = self.get_units(self.currentText().strip().lower())
@@ -162,7 +164,6 @@ class IngredientNameField(QComboBox):
         except AttributeError:
             pass
 
-
 class UnitField(QComboBox):
 
     def __init__(self, units, index=0):
@@ -175,7 +176,7 @@ class UnitField(QComboBox):
         self.setEditable(True)
         self.setCompleter(QCompleter(units))
         self.setValidator(InputValidator(units))
-        self.setCurrentIndex(-1)
+        self.setCurrentIndex(-1) 
 
 class FloatField(QLineEdit):
 
@@ -537,7 +538,6 @@ class RecipeEditor(QMainWindow):
             self.ingr_name_layout.addWidget(QLabel('Ingredient Name'))
             for k in range(1,len(self.rec_df['ingr']) + 1):
                 self.ingr_name_layout.addWidget(IngredientNameField(parent=self, index=k))
-            self.ingredient_index = len(self.rec_df['ingr']) + 1
             ingr_name_fields = (self.ingr_name_layout.itemAt(index) for index in range(1,self.ingr_name_layout.count())) 
             for index, field in enumerate(ingr_name_fields):
                 field.widget().setCurrentIndex(list(sorted(cost.ingr_dict.keys())).index(self.rec_df['ingr'][index]))
@@ -748,18 +748,19 @@ class RecipeEditor(QMainWindow):
     def add_ingredient_input_row(self):
 
         if self.ingredient_insertion_index < 10:
-            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_index))
-            self.ingredient_index += 1
+            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_insertion_index))
+            self.ingredient_insertion_index += 1
             self.qty_layout.insertWidget(self.ingredient_insertion_index, FloatField())
-            self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField(cost.unit_list))
+            self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField([]))
             self.ingr_name_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
             self.qty_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
             self.unit_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
             self.ingredient_insertion_index += 1
         else:
-            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField())
+            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_insertion_index))
             self.qty_layout.insertWidget(self.ingredient_insertion_index, FloatField())
-            self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField(cost.unit_list))
+            self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField([]))
+            self.ingredient_insertion_index += 1
 
     def add_yield_input_row(self):
 

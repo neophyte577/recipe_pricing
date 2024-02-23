@@ -36,6 +36,7 @@ class Ingredient():
             elif (target_unit in weight_dict) and (self.unit in vol_dict):
                 ingr_cost = qty * cost_converter((1 / self.density) * self.unit_cost, 'g', target_unit)
                 return ingr_cost, qty, target_unit
+            
             elif (target_unit in vol_dict) and (self.unit in weight_dict):
                 ingr_cost = qty * cost_converter(self.density * self.unit_cost, 'c', target_unit)
                 return ingr_cost, qty, target_unit
