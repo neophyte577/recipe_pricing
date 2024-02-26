@@ -359,7 +359,7 @@ class AddRecipeWindow(QMainWindow):
         self.ingr_name_layout.addWidget(IngredientNameField(parent=self, index=self.ingredient_index))
         self.ingredient_index += 1
         self.qty_layout.addWidget(FloatField())
-        self.unit_layout.addWidget(UnitField(sorted(cost.unit_list)))
+        self.unit_layout.addWidget(UnitField())
 
     def add_yield_input_row(self):
 
@@ -409,8 +409,6 @@ class AddRecipeWindow(QMainWindow):
         for index, col in enumerate(columns):
 
             input_df.insert(index, headers[index], col)
-
-        input_df.dropna(how='all')
 
         ingredient_input_df = input_df[['ingr','qty','unit']].dropna(how='all')
 
@@ -749,7 +747,6 @@ class RecipeEditor(QMainWindow):
 
         if self.ingredient_insertion_index < 10:
             self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_insertion_index))
-            self.ingredient_insertion_index += 1
             self.qty_layout.insertWidget(self.ingredient_insertion_index, FloatField())
             self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField([]))
             self.ingr_name_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
@@ -810,8 +807,6 @@ class RecipeEditor(QMainWindow):
         for index, col in enumerate(columns):
 
             input_df.insert(index, headers[index], col)
-
-        input_df.dropna(how='all')
 
         ingredient_input_df = input_df[['ingr','qty','unit']].dropna(how='all')
 
