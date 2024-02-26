@@ -286,7 +286,7 @@ ingr_dict, rec_dict, item_dict = {}, {}, {}
 
 # Functions
 
-def unit_converter(qty, given_unit, target_unit):
+def unit_converter(qty, given_unit, target_unit, ingr_name=None):
 
     big_unit_dict_list = unit_dict_list + [size_dict]
     
@@ -300,8 +300,44 @@ def unit_converter(qty, given_unit, target_unit):
             else:
                 pass 
 
+    elif ingr_name != None:
+
+        ingredient = ingr_dict[ingr_name]
+
+        density = ingredient.density
+
+        if given_unit in count_dict:
+
+            unit_converter(qty, given_unit, 'ea')
+
+            return ingredient.each_converter(target_unit)
+
+        else:
+
+            if density != np.pi:
+
+                if given_unit in weight_dict and target_unit in vol_dict:
+
+                    in_grams = unit_converter(qty, given_unit, 'g')
+
+                    in_cups = in_grams / density
+
+                    return unit_converter(in_cups, 'c', target_unit)
+
+                elif given_unit in vol_dict and target_unit in weight_dict:            
+
+                    in_cups = unit_converter(qty, given_unit, 'c')
+
+                    in_grams = in_cups * density
+
+                    return unit_converter(in_grams, 'g', target_unit)
+            
+            else:
+
+                print('NoDensityError in unit_converter')
+
     else:
-        print(given_unit)
+        print(given_unit, '-->', target_unit)
         print('InvalidUnitError in unit_converter()')
 
 
