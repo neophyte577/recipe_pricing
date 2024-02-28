@@ -66,7 +66,6 @@ cucumber,0.14,1.0,oz,85.0,12.5,oz,USF5374855
 "duck, whole",3.39,1.0,lb,188.0,5.0,lb,RDP77110
 eggs,26.37,15.0,dz,,2.0,oz,
 fig preserves,7.69,13.0,oz,141.0,,,Whole Foods
-filet mignon (whole foods),39.99,1.0,lb,259.0,8.0,oz,Whole Foods
 flour,25.06,50.0,lb,120.0,,,
 "french fries, long",52.3,30.0,lb,60.0,,,USF5990518
 garlic powder,11.95,21.0,oz,155.0,,,USF2501161
@@ -208,4 +207,11 @@ asparagus,0.32,1.0,oz,138.0,62.5,g,USF5705694
 "pasta, macaroni",28.41,20.0,lb,116.0,,,USF9327651
 "pasta, rigatoni",2.5,1.0,lb,59.0,,,Safeway
 salad cream,99.04,149.0,oz,254.0,,,USF1069358
-"tomato, large",0.12,1.0,oz,254.0,182,g,USF1331339
+"tomato, large",0.12,1.0,oz,254.0,182.0,g,USF1331339
+filet mignon (whole foods 6 oz),39.99,1.0,lb,259.0,6.0,oz,Whole Foods
+filet mignon (whole foods 8 oz),39.99,1.0,lb,259.0,8.0,oz,Whole Foods
+hazlenut,27.56,1,lb,122,1.41,g,USF2477895
+"chocolate, bittersweet",11.50,1,lb,254,,,USF2938969
+"chocolate, baking milk",11.47,1,lb,173,,,USF1050094
+nutella,12.26,33,oz,313,,,RDP88506
+cocoa powder,19.86,2.2,lb,125,,,RDP1080075
