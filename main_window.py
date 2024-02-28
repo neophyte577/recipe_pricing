@@ -1,6 +1,6 @@
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
-import ingredients_window, recipes_window, output_window
+import ingredients_window, recipes_window, output_window, orders_window
 import cost
 
 class MainWindow(QMainWindow):
@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Main Window')
         self.setWindowIcon(QIcon('dep/Icons/cutlery.png'))
-        self.setFixedSize(250,135)
+        self.setFixedSize(250,145)
 
         hlayout = QHBoxLayout()
 
@@ -30,9 +30,13 @@ class MainWindow(QMainWindow):
         self.pricing_button = QPushButton('Pricing')
         self.pricing_button.pressed.connect(self.generate_output_window)
 
+        self.orders_button = QPushButton('Orders')
+        self.orders_button.pressed.connect(self.generate_orders_window)
+
         vlayout.addStretch()
         vlayout.addWidget(self.ingredients_button)
         vlayout.addWidget(self.recipes_button)
+        vlayout.addWidget(self.orders_button)
         vlayout.addWidget(self.pricing_button)
         vlayout.addStretch()
 
@@ -66,11 +70,15 @@ class MainWindow(QMainWindow):
         self.output_window = output_window.SelectionWindow()
         self.output_window.show()
 
+    def generate_orders_window(self):
+
+        self.orders_window = orders_window.NavigationWindow()
+        self.orders_window.show()
+
     def closeEvent(self, event):
 
-        for w in [self.ingredients_window, self.recipes_window, self.output_window]:
-            if w:
-                w.close()
+        QApplication.closeAllWindows()
+        event.accept()
 
 def main():
 

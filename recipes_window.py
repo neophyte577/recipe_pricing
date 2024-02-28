@@ -194,6 +194,7 @@ class AddRecipeWindow(QMainWindow):
 
         self.setWindowTitle('Add Recipe')
         self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/cake--plus.png')))
+        self.setFixedWidth(900)
 
         # Recipe Name Input Area
 
@@ -357,9 +358,9 @@ class AddRecipeWindow(QMainWindow):
     def add_ingredient_input_row(self):
 
         self.ingr_name_layout.addWidget(IngredientNameField(parent=self, index=self.ingredient_index))
-        self.ingredient_index += 1
         self.qty_layout.addWidget(FloatField())
-        self.unit_layout.addWidget(UnitField())
+        self.unit_layout.addWidget(UnitField([]))
+        self.ingredient_index += 1
 
     def add_yield_input_row(self):
 

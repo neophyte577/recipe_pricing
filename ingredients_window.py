@@ -812,7 +812,7 @@ class NavigationWindow(QMainWindow):
         self.add_ingr_button.clicked.connect(self.generate_add_ingr_window)
 
         self.view_ingr_button = QPushButton('View Ingredients')
-        self.view_ingr_button.clicked.connect(self.generate_view_ingredients_window)
+        self.view_ingr_button.clicked.connect(self.generate_view_ingr_window)
 
         self.edit_ingr_button = QPushButton('Edit Ingredients')
         self.edit_ingr_button.clicked.connect(self.generate_edit_ingredients_window)
@@ -852,11 +852,11 @@ class NavigationWindow(QMainWindow):
         self.edit_ingr_window = EditIngredientsWindow()
         self.edit_ingr_window.show()
 
-    def generate_view_ingredients_window(self):
+    def generate_view_ingr_window(self):
 
         cost.main()
-        self.view_ingredients_window = ViewIngredientsWindow()
-        self.view_ingredients_window.show()
+        self.view_ingr_window = ViewIngredientsWindow()
+        self.view_ingr_window.show()
 
     def generate_remove_ingredients_window(self):
         
@@ -866,7 +866,7 @@ class NavigationWindow(QMainWindow):
 
     def closeEvent(self, event):
 
-        for w in [self.add_ingr_window, self.edit_ingr_window, self.remove_ingr_window]:
+        for w in [self.add_ingr_window, self.view_ingr_window, self.edit_ingr_window, self.remove_ingr_window]:
             if w:
                 w.close()
 

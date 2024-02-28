@@ -54,6 +54,28 @@ class SuccessDialog(QDialog):
         self.layout.addWidget(self.button)
         self.setLayout(self.layout)
 
+class ConfirmationDialog(QDialog):
+
+    def __init__(self, parent=None, message='Are you sure you finna buss it?'):
+
+        super().__init__(parent)
+
+        self.setWindowTitle('No Cap?')
+        self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/exclamation--frame.png')))
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText('frfr ong')
+        self.buttons.button(QDialogButtonBox.Cancel).setText('Nah')
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.message = QLabel(message)
+        self.layout.addWidget(self.message)
+        self.layout.addWidget(self.buttons)
+        self.setLayout(self.layout)
+
+
 class InputErrorDialog(QDialog):
 
     def __init__(self, message, parent=None):
@@ -253,7 +275,7 @@ class FloatField(QLineEdit):
 
 class AddOrderWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, parent):
 
         self.select_units_window = None
 
@@ -262,11 +284,13 @@ class AddOrderWindow(QMainWindow):
         self.setWindowTitle('Create Order')
         self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/service-bell--plus.png')))
         
-        orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
+        self.parent_window = parent
+
+        self.orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
 
         self.order_list = []
 
-        for file in os.listdir(orders_directory):
+        for file in os.listdir(self.orders_directory):
             filename = os.fsdecode(file)
             if filename.endswith('csv'):
                 order_name = filename.replace('.csv','')
@@ -292,7 +316,7 @@ class AddOrderWindow(QMainWindow):
         for k in range(1,11):
             self.recipe_layout.addWidget(RecipeField(parent=self, index=k))
         self.recipe_column.setLayout(self.recipe_layout)
-        self.ingredient_index = 11
+        self.insertion_index = 11
 
         self.qty_column = QWidget()
         self.qty_layout = QVBoxLayout()
@@ -364,8 +388,8 @@ class AddOrderWindow(QMainWindow):
 
     def add_input_row(self):
 
-        self.recipe_layout.addWidget(RecipeField(parent=self, index=self.ingredient_index))
-        self.ingredient_index += 1
+        self.recipe_layout.addWidget(RecipeField(parent=self, index=self.insertion_index))
+        self.insertion_index += 1
         self.qty_layout.addWidget(FloatField())
         self.unit_layout.addWidget(UnitField([]))
 
@@ -499,6 +523,21 @@ class AddOrderWindow(QMainWindow):
             
             self.filename_field.clear()
 
+            self.order_list = []
+
+            for file in os.listdir(self.orders_directory):
+                filename = os.fsdecode(file)
+                if filename.endswith('csv'):
+                    order_name = filename.replace('.csv','')
+                    self.order_list.append(order_name)
+
+            self.parent_window.order_selector.clear()
+            self.parent_window.order_selector.addItems(sorted(self.order_list))
+            self.parent_window.order_selector.setEditable(True)
+            self.parent_window.order_selector.setCompleter(QCompleter(self.order_list))
+            self.parent_window.order_selector.setValidator(InputValidator(self.order_list))
+            self.parent_window.order_selector.setCurrentIndex(-1)
+
             self.success_dialog = SuccessDialog()
             self.success_dialog.exec()
 
@@ -530,6 +569,21 @@ class AddOrderWindow(QMainWindow):
                     field.widget().clear()
             
             self.filename_field.clear()
+
+            self.order_list = []
+
+            for file in os.listdir(self.orders_directory):
+                filename = os.fsdecode(file)
+                if filename.endswith('csv'):
+                    order_name = filename.replace('.csv','')
+                    self.order_list.append(order_name)
+
+            self.parent_window.order_selector.clear()
+            self.parent_window.order_selector.addItems(sorted(self.order_list))
+            self.parent_window.order_selector.setEditable(True)
+            self.parent_window.order_selector.setCompleter(QCompleter(self.order_list))
+            self.parent_window.order_selector.setValidator(InputValidator(self.order_list))
+            self.parent_window.order_selector.setCurrentIndex(-1)
 
         shopping_list_df = self.shopping_list_constructor(order_df)
 
@@ -663,7 +717,7 @@ class SelectUnitsWindow(QMainWindow):
         self.add_ingr_row_button.setIcon(QIcon(cost.resolve_path('dep/Icons/plus-button.png')))
         self.add_ingr_row_button.setFixedWidth(160)
         self.add_ingr_row_button.clicked.connect(self.add_input_row)
-        self.ingredient_insertion_index = len(self.shopping_list_df['ingr']) + 1
+        self.insertion_index = len(self.shopping_list_df['ingr']) + 1
 
         self.ingredient_input_area = QWidget()
         input_layout = QVBoxLayout()
@@ -700,19 +754,19 @@ class SelectUnitsWindow(QMainWindow):
 
     def add_input_row(self):
 
-        if self.ingredient_insertion_index < 10:
-            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_insertion_index))
-            self.qty_layout.insertWidget(self.ingredient_insertion_index, FloatField())
-            self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField([]))
-            self.ingr_name_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
-            self.qty_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
-            self.unit_layout.itemAt(self.ingredient_insertion_index+1).widget().setParent(None)
-            self.ingredient_insertion_index += 1
+        if self.insertion_index < 10:
+            self.ingr_name_layout.insertWidget(self.insertion_index, IngredientNameField(parent=self, index=self.insertion_index))
+            self.qty_layout.insertWidget(self.insertion_index, FloatField())
+            self.unit_layout.insertWidget(self.insertion_index, UnitField([]))
+            self.ingr_name_layout.itemAt(self.insertion_index+1).widget().setParent(None)
+            self.qty_layout.itemAt(self.insertion_index+1).widget().setParent(None)
+            self.unit_layout.itemAt(self.insertion_index+1).widget().setParent(None)
+            self.insertion_index += 1
         else:
-            self.ingr_name_layout.insertWidget(self.ingredient_insertion_index, IngredientNameField(parent=self, index=self.ingredient_insertion_index))
-            self.qty_layout.insertWidget(self.ingredient_insertion_index, FloatField())
-            self.unit_layout.insertWidget(self.ingredient_insertion_index, UnitField([]))
-            self.ingredient_insertion_index += 1
+            self.ingr_name_layout.insertWidget(self.insertion_index, IngredientNameField(parent=self, index=self.insertion_index))
+            self.qty_layout.insertWidget(self.insertion_index, FloatField())
+            self.unit_layout.insertWidget(self.insertion_index, UnitField([]))
+            self.insertion_index += 1
 
     def shopping_list_updator(self):
 
@@ -813,6 +867,7 @@ class SelectUnitsWindow(QMainWindow):
 
             SuccessDialog().exec()
 
+            self.parent_window.close()
             self.close()
 
             return
@@ -824,26 +879,416 @@ class SelectUnitsWindow(QMainWindow):
 
 class EditOrderWindow(QMainWindow):
 
-    def __init__(self, order_name):
+    def __init__(self, order_name, parent):
+
+        self.select_units_window = None
 
         super().__init__()
 
-        order_df = pd.read_csv(cost.resolve_path('dep/Orders') + '/' + order_name)
-
-
-class ShoppingListWindow(QMainWindow):
-
-    def __init__(self):
-
-        super().__init__()
-
-        self.setWindowTitle('Shopping List')
+        self.setWindowTitle('Edit Order')
         self.setWindowIcon(QIcon('dep/Icons/notebook--pencil.png'))
 
-        shopping_list_path = cost.resolve_path('dep/ShoppingLists')
+        self.parent_window = parent
+        self.order_df = pd.read_csv(cost.resolve_path('dep/Orders') + '/' + order_name + '.csv')
 
-        self.shopping_list_selector = QComboBox()
+        self.orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
+
+        self.order_list = []
+
+        for file in os.listdir(self.orders_directory):
+            filename = os.fsdecode(file)
+            if filename.endswith('csv'):
+                order_name = filename.replace('.csv','')
+                self.order_list.append(order_name)
+
+        # Fileame Input & Delete Order Area
+
+        self.filename_header = QLabel('Order Name')
+        self.filename_field = QLineEdit()
+        self.filename_field.setText(capwords(order_name))
+        self.filename_field.setFixedWidth(250)
+
+        self.filename_input_area = QWidget()
+        filename_layout = QVBoxLayout()
+        filename_layout.addWidget(self.filename_header)
+        filename_layout.addWidget(self.filename_field)
+        self.filename_input_area.setLayout(filename_layout)
+
+        # Order Deletion Button
+
+        self.delete_order_button = QPushButton('delet this')
+        self.delete_order_button.setIcon(QIcon(cost.resolve_path('dep/Icons/fire-big.png')))
+        self.delete_order_button.clicked.connect(self.delete_order)
+
+        # Combined Name Input and Deletion Area
+
+        self.name_input_and_deletion_button_container_widget = QWidget()
+        recipe_name_and_deletion_layout = QHBoxLayout()
+        recipe_name_and_deletion_layout.addWidget(self.filename_input_area)
+        recipe_name_and_deletion_layout.addWidget(self.delete_order_button)
+        self.name_input_and_deletion_button_container_widget.setLayout(recipe_name_and_deletion_layout)
+
+        # Recipe Input Area
+
+        self.recipe_column = QWidget()
+        self.recipe_layout = QVBoxLayout()
+        self.recipe_layout.addWidget(QLabel('Recipe'))
+        for k in range(1,len(self.order_df['rec']) + 1):
+            self.recipe_layout.addWidget(RecipeField(parent=self, index=k))
+        recipe_fields = (self.recipe_layout.itemAt(index) for index in range(1,self.recipe_layout.count())) 
+        for index, field in enumerate(recipe_fields):
+            field.widget().setCurrentIndex(list(cost.rec_dict.keys()).index(self.order_df['rec'][index]))
+        if len(self.order_df['rec']) < 10:
+            for k in range(10-len(self.order_df['rec'])):
+                invisible_field = RecipeField()
+                retain = QSizePolicy()
+                retain.setRetainSizeWhenHidden(True)
+                invisible_field.setSizePolicy(retain)
+                self.recipe_layout.addWidget(invisible_field)
+                invisible_field.hide()
+        self.recipe_column.setLayout(self.recipe_layout)
+        self.insertion_index = len(self.order_df['rec']) + 1
+
+        self.qty_column = QWidget()
+        self.qty_layout = QVBoxLayout()
+        self.qty_layout.addWidget(QLabel('Quantity'))
+        for k in range(1,len(self.order_df['qty']) + 1):
+            self.qty_layout.addWidget(FloatField())
+        qty_fields = (self.qty_layout.itemAt(index) for index in range(1,self.qty_layout.count())) 
+        for index, field in enumerate(qty_fields):
+            field.widget().setText(str(self.order_df['qty'][index]))
+        if len(self.order_df['qty']) < 10:
+            for k in range(10-len(self.order_df['qty'])):
+                invisible_field = FloatField()
+                retain = QSizePolicy()
+                retain.setRetainSizeWhenHidden(True)
+                invisible_field.setSizePolicy(retain)
+                self.qty_layout.addWidget(invisible_field)
+                invisible_field.hide()
+        self.qty_column.setLayout(self.qty_layout)
+
+        self.unit_column = QWidget()
+        self.unit_layout = QVBoxLayout()
+        self.unit_layout.addWidget(QLabel('Yield Unit'))
+        for k in range(1,len(self.order_df['unit']) + 1):
+            self.unit_layout.addWidget(UnitField([]))
+        unit_fields = (self.unit_layout.itemAt(index) for index in range(1,self.unit_layout.count())) 
+        for index, field in enumerate(unit_fields, start=1):
+            yield_unit_list = list(cost.rec_dict[self.recipe_layout.itemAt(index).widget().currentText()].makes.keys())
+            field.widget().addItems(yield_unit_list)
+            field.widget().setCurrentIndex(yield_unit_list.index(self.order_df['unit'][index-1]))
+        if len(self.order_df['unit']) < 10:
+            for k in range(10-len(self.order_df['unit'])):
+                invisible_field = UnitField([])
+                retain = QSizePolicy()
+                retain.setRetainSizeWhenHidden(True)
+                invisible_field.setSizePolicy(retain)
+                self.unit_layout.addWidget(invisible_field)
+                invisible_field.hide()
+        self.unit_column.setLayout(self.unit_layout)
+
+        self.input_fields_container_widget = QWidget()
+        self.input_layout = QHBoxLayout()
+        self.input_layout.addWidget(self.recipe_column)
+        self.input_layout.addWidget(self.qty_column)
+        self.input_layout.addWidget(self.unit_column)
+        self.input_fields_container_widget.setLayout(self.input_layout)
+
+        self.recipe_scroll_area = QScrollArea()
+        self.recipe_scroll_area.setWidget(self.input_fields_container_widget)
+        self.recipe_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.recipe_scroll_area.setWidgetResizable(True)
+
+        self.add_input_row_button = QPushButton('Add Another Recipe')
+        self.add_input_row_button.setIcon(QIcon(cost.resolve_path('dep/Icons/plus-button.png')))
+        self.add_input_row_button.setFixedWidth(160)
+        self.add_input_row_button.clicked.connect(self.add_input_row)
+
+        self.input_area = QWidget()
+        self.input_layout = QVBoxLayout()
+        self.input_layout.addWidget(self.recipe_scroll_area)
+        self.input_layout.addWidget(self.add_input_row_button)
+        self.input_area.setLayout(self.input_layout)
+
+        # Main Button Row
+
+        main_button_layout = QHBoxLayout()
+
+        self.save_order_button = QPushButton('Save Order')
+        self.save_order_button.clicked.connect(self.save_order)
+
+        self.select_units_button = QPushButton('Generate Shopping List')
+        self.select_units_button.clicked.connect(self.generate_unit_selection_window)
+
+        self.close_button = QPushButton('Bye Felicia')
+        self.close_button.clicked.connect(self.close_window)
+
+        self.main_button_row = QWidget()
+        main_button_layout.addWidget(self.save_order_button)
+        main_button_layout.addWidget(self.select_units_button)
+        main_button_layout.addWidget(self.close_button)
+        self.main_button_row.setLayout(main_button_layout)
+
+        # Central Widget
+
+        self.central_container_widget = QWidget()
+        central_layout = QVBoxLayout()
+
+        central_layout.addWidget(self.filename_input_area)
+        central_layout.addWidget(self.input_area)
+        central_layout.addWidget(self.main_button_row)
+
+        self.central_container_widget.setLayout(central_layout)
+        self.setCentralWidget(self.central_container_widget)
+
+    def add_input_row(self):
+
+        if self.insertion_index < 10:
+            self.recipe_layout.insertWidget(self.insertion_index, RecipeField(parent=self, index=self.insertion_index))
+            self.qty_layout.insertWidget(self.insertion_index, FloatField())
+            self.unit_layout.insertWidget(self.insertion_index, UnitField([]))
+            self.recipe_layout.itemAt(self.insertion_index+1).widget().setParent(None)
+            self.qty_layout.itemAt(self.insertion_index+1).widget().setParent(None)
+            self.unit_layout.itemAt(self.insertion_index+1).widget().setParent(None)
+            self.insertion_index += 1
+        else:
+            self.recipe_layout.insertWidget(self.insertion_index, RecipeField(parent=self, index=self.insertion_index))
+            self.qty_layout.insertWidget(self.insertion_index, FloatField())
+            self.unit_layout.insertWidget(self.insertion_index, UnitField([]))
+            self.insertion_index += 1
+
+    def order_df_constructor(self):
+
+        order_df = pd.DataFrame()
+
+        columns = []
+
+        input_layouts = [self.recipe_layout, self.qty_layout, self.unit_layout]
+
+        for layout in input_layouts:
+            input_fields = (layout.itemAt(index) for index in range(1,layout.count()))
+            col = []
+            for field in input_fields:
+                if isinstance(field.widget(), QLineEdit):
+                    if field.widget().text().strip() != '':
+                        col.append(field.widget().text())
+                    else:
+                        col.append(np.nan)
+                elif isinstance(field.widget(), QComboBox):
+                    if field.widget().currentText().strip() != '':
+                        col.append(field.widget().currentText())
+                    else:
+                        col.append(np.nan)
+            columns.append(col)
+
+        headers = ['rec','qty','unit']
         
+        for index, col in enumerate(columns):
+
+            order_df.insert(index, headers[index], col)
+
+        order_df.dropna(how='all', inplace=True)
+
+        order_df.reset_index(drop=True, inplace=True)
+
+        if order_df.isnull().values.all():
+
+            InputErrorDialog('WRONG! Empty of input.').exec()
+            return
+    
+        elif order_df.isnull().values.any():
+
+            InputErrorDialog('WRONG! Missing input(s).').exec()
+            return
+        
+        else:
+            
+            return order_df
+        
+    def shopping_list_constructor(self, order_df):
+
+        shopping_list_dict = {}
+
+        for k, row in order_df.iterrows():
+
+            recipe = cost.rec_dict[row['rec']]
+
+            qty_dict = recipe.qty_dict_constructor()
+
+            for ingredient in qty_dict:
+
+                if ingredient not in shopping_list_dict:
+
+                    shopping_list_dict[ingredient] = qty_dict[ingredient]
+                
+                else:
+
+                    shopping_list_dict[ingredient][0] += qty_dict[ingredient][0]
+
+        shopping_list_df = pd.DataFrame(columns=['ingr','qty','unit'])
+
+        for ingr in shopping_list_dict:
+
+            base_unit = cost.get_base_unit(ingr.unit)
+
+            if base_unit == 'g':
+                unit = DEFAULT_WEIGHT
+            elif base_unit == 'c':
+                unit = DEFAULT_VOLUME
+            elif base_unit == 'ea': 
+                unit = DEFAULT_COUNT
+
+            qty = cost.unit_converter(shopping_list_dict[ingr][0], shopping_list_dict[ingr][1], unit, ingr.name)
+
+            shopping_list_df.loc[len(shopping_list_df.index)] = [ingr.name, qty, unit]
+
+        shopping_list_df.dropna(how='all', inplace=True)
+
+        shopping_list_df = shopping_list_df.astype({'qty':'float64'})
+
+        shopping_list_df['qty'] = shopping_list_df['qty'].round(3)
+
+        shopping_list_df['cost'] = pd.Series()
+
+        for k, row in shopping_list_df.iterrows():
+
+            ingredient = cost.ingr_dict[row['ingr']]
+
+            shopping_list_df['cost'][k] = round(ingredient.cost(qty=row['qty'], target_unit=row['unit'])[0], 2)
+
+        print('in slc:', shopping_list_df.head())
+
+        return shopping_list_df
+
+    def save_order(self):
+
+        order_df = self.order_df_constructor()
+
+        order_name = self.filename_field.text().strip().lower()
+
+        if order_name == '':
+            
+            InputErrorDialog('WRONG! Needs a name.').exec()
+            return
+        
+        else:
+
+            try:
+                os.remove(cost.resolve_path('dep/Orders') + '/' + order_name + '.csv')
+            except OSError as error:
+                print(error)
+
+            order_df.to_csv(cost.resolve_path('dep/Orders') + '/' + order_name + '.csv', mode='w', index=False)
+
+            for layout in [self.recipe_layout, self.qty_layout, self.unit_layout]:
+                input_fields = (layout.itemAt(index) for index in range(1,layout.count()))
+                for field in input_fields:
+                    field.widget().clear()
+            
+            self.filename_field.clear()
+
+            self.order_list = []
+
+            for file in os.listdir(self.orders_directory):
+                filename = os.fsdecode(file)
+                if filename.endswith('csv'):
+                    order_name = filename.replace('.csv','')
+                    self.order_list.append(order_name)
+
+            self.parent_window.order_selector.clear()
+            self.parent_window.order_selector.addItems(sorted(self.order_list))
+            self.parent_window.order_selector.setEditable(True)
+            self.parent_window.order_selector.setCompleter(QCompleter(self.order_list))
+            self.parent_window.order_selector.setValidator(InputValidator(self.order_list))
+            self.parent_window.order_selector.setCurrentIndex(-1)
+
+            self.success_dialog = SuccessDialog()
+            self.success_dialog.exec()
+
+            return
+
+    def generate_unit_selection_window(self, order_df):
+
+        order_df = self.order_df_constructor()
+
+        order_name = self.filename_field.text().strip().lower()
+
+        if order_name == '':
+            
+            InputErrorDialog('WRONG! Needs a name.').exec()
+            return
+        
+        else:
+
+            try:
+                os.remove(cost.resolve_path('dep/Orders') + '/' + order_name + '.csv')
+            except OSError as error:
+                print(error)
+
+            order_df.to_csv(cost.resolve_path('dep/Orders') + '/' + order_name + '.csv', mode='w', index=False)
+
+            for layout in [self.recipe_layout, self.qty_layout, self.unit_layout]:
+                input_fields = (layout.itemAt(index) for index in range(1,layout.count()))
+                for field in input_fields:
+                    field.widget().clear()
+            
+            self.filename_field.clear()
+
+            self.order_list = []
+
+            self.orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
+
+            for file in os.listdir(self.orders_directory):
+                filename = os.fsdecode(file)
+                if filename.endswith('csv'):
+                    order_name = filename.replace('.csv','')
+                    self.order_list.append(order_name)
+
+            self.parent_window.order_selector.clear()
+            self.parent_window.order_selector.addItems(sorted(self.order_list))
+            self.parent_window.order_selector.setEditable(True)
+            self.parent_window.order_selector.setCompleter(QCompleter(self.order_list))
+            self.parent_window.order_selector.setValidator(InputValidator(self.order_list))
+            self.parent_window.order_selector.setCurrentIndex(-1)
+
+        shopping_list_df = self.shopping_list_constructor(order_df)
+
+        print('in gusw', shopping_list_df)
+
+        self.select_units_window = SelectUnitsWindow(shopping_list_df, parent=self)
+        self.select_units_window.show()
+
+    def delete_order(self):
+
+        if ConfirmationDialog(parent=self).exec():
+                os.remove(cost.resolve_path('dep/Recipes') + '/' + self.recipe_name + '.csv')
+                cost.main()
+                SuccessDialog(parent=self).exec()
+                self.parent_window.order_list = []
+                orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
+                for file in os.listdir(orders_directory):
+                    filename = os.fsdecode(file)
+                    if filename.endswith('csv'):
+                        order_name = filename.replace('.csv','')
+                        self.parent_window.order_list.append(order_name)
+                self.parent_window.recipe_selector.clear()
+                self.parent_window.recipe_selector.addItems(self.parent_window.order_list)
+                self.parent_window.recipe_selector.setCompleter(QCompleter(self.parent_window.order_list))
+                self.parent_window.recipe_selector.setValidator(InputValidator(self.parent_window.order_list))
+                self.parent_window.recipe_selector.setCurrentIndex(-1)
+                self.close()
+        else:
+            return
+
+
+    def close_window(self):
+
+        self.close()
+
+    def closeEvent(self, event):
+
+        if self.select_units_window:
+            self.select_units_window.close()
 
 class NavigationWindow(QMainWindow):
 
@@ -851,17 +1296,17 @@ class NavigationWindow(QMainWindow):
 
         super().__init__()
 
-        self.add_order_window, self.edit_orders_window, self.shopping_list_window = None, None, None
+        self.add_order_window, self.edit_orders_window = None, None
 
         self.setWindowTitle('Orders')
         self.setWindowIcon(QIcon(cost.resolve_path('dep/Icons/service-bell.png')))
         self.setFixedWidth(300)
 
-        orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
+        self.orders_directory = os.fsencode(cost.resolve_path('dep/Orders'))
 
         self.order_list = []
 
-        for file in os.listdir(orders_directory):
+        for file in os.listdir(self.orders_directory):
             filename = os.fsdecode(file)
             if filename.endswith('csv'):
                 order_name = filename.replace('.csv','')
@@ -884,13 +1329,9 @@ class NavigationWindow(QMainWindow):
         self.add_recipe_button = QPushButton('Create Order')
         self.add_recipe_button.clicked.connect(self.generate_add_order_window)
 
-        self.shopping_list_button = QPushButton('Shopping Lists')
-        self.shopping_list_button.clicked.connect(self.generate_shopping_list_window)
-
         vlayout.addWidget(self.order_selector)
         vlayout.addWidget(self.open_order_button)
         vlayout.addWidget(self.add_recipe_button)
-        vlayout.addWidget(self.shopping_list_button)
 
         icon = QLabel()
         icon.setPixmap(QPixmap(cost.resolve_path('dep/Icons/service_bell_icon.png')))
@@ -909,7 +1350,7 @@ class NavigationWindow(QMainWindow):
     def generate_add_order_window(self):
 
         cost.main()
-        self.add_order_window = AddOrderWindow()
+        self.add_order_window = AddOrderWindow(parent=self)
         self.add_order_window.show()
 
     def generate_edit_order_window(self):
@@ -917,18 +1358,12 @@ class NavigationWindow(QMainWindow):
         order_name = self.order_selector.currentText()
         if order_name in self.order_list:
             cost.main()
-            self.edit_orders_window = EditOrderWindow(order_name)
+            self.edit_orders_window = EditOrderWindow(order_name=order_name, parent=self)
             self.edit_orders_window.show()        
-
-    def generate_shopping_list_window(self):
-
-        cost.main()
-        self.shopping_list_window = ShoppingListWindow()
-        self.shopping_list_window.show()
 
     def closeEvent(self, event):
 
-        for w in [self.add_order_window, self.edit_orders_window, self.shopping_list_window]:
+        for w in [self.add_order_window, self.edit_orders_window]:
             if w:
                 w.close()
 
