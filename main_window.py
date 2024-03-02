@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Main Window')
         self.setWindowIcon(QIcon('dep/Icons/cutlery.png'))
-        self.setFixedSize(250,145)
+        self.setFixedSize(250,120)
 
         hlayout = QHBoxLayout()
 
@@ -27,9 +27,6 @@ class MainWindow(QMainWindow):
         self.recipes_button = QPushButton('Recipes')
         self.recipes_button.clicked.connect(self.generate_recipes_window)
 
-        self.pricing_button = QPushButton('Pricing')
-        self.pricing_button.pressed.connect(self.generate_output_window)
-
         self.orders_button = QPushButton('Orders')
         self.orders_button.pressed.connect(self.generate_orders_window)
 
@@ -37,7 +34,6 @@ class MainWindow(QMainWindow):
         vlayout.addWidget(self.ingredients_button)
         vlayout.addWidget(self.recipes_button)
         vlayout.addWidget(self.orders_button)
-        vlayout.addWidget(self.pricing_button)
         vlayout.addStretch()
 
         logo = QLabel()
@@ -64,11 +60,6 @@ class MainWindow(QMainWindow):
 
         self.recipes_window = recipes_window.NavigationWindow()
         self.recipes_window.show()
-
-    def generate_output_window(self):
-
-        self.output_window = output_window.SelectionWindow()
-        self.output_window.show()
 
     def generate_orders_window(self):
 

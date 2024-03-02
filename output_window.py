@@ -62,6 +62,8 @@ class SelectionWindow(QMainWindow):
 
     def __init__(self):
 
+        cost.main()
+
         super().__init__()
 
         self.setWindowTitle('Price Which?')
@@ -104,7 +106,7 @@ class SelectionWindow(QMainWindow):
 
         self.display_output_button = QPushButton('Vamanos')
         self.display_output_button.setFixedSize(100,25)
-        self.display_output_button.pressed.connect(self.display_button_pressed)
+        self.display_output_button.pressed.connect(self.display_output)
 
         layout.addWidget(self.recipe_label)
         layout.addWidget(self.recipe_selector)
@@ -126,13 +128,13 @@ class SelectionWindow(QMainWindow):
         if self.recipe_selector.currentText() in self.rec_dict.keys():
             self.size_selector.addItems(self.rec_dict[self.recipe_selector.currentText().lower()].makes.keys())
     
-    def display_button_pressed(self):
+    def display_output(self):
 
         recipe = self.rec_dict[self.recipe_selector.currentText().lower()]
 
         size = self.size_selector.currentText()
 
-        scale_factor = int(self.set_scale_factor.currentText())
+        scale_factor = float(self.set_scale_factor.currentText())
 
         self.output = OutputWindow(recipe, size, scale_factor)
 
@@ -152,6 +154,7 @@ def main():
 
 
 if __name__ == '__main__':
+
     main()
 
 
