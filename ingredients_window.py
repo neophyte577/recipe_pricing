@@ -284,9 +284,9 @@ class AddIngredientWindow(QMainWindow):
         
         else:
 
-            new_ingr_row = []
+            new_ingr_row = [ingredient_name]
 
-            for field in self.input_fields:
+            for field in self.input_fields[1:]:
 
                 if isinstance(field, QLineEdit):
 
@@ -546,9 +546,9 @@ class IngredientEditor(QMainWindow):
 
             new_ingr_df = cost.ingr_df.copy(deep=True)
 
-            new_ingr_row = []
+            new_ingr_row = [new_ingredient_name]
 
-            for field in self.input_fields:
+            for field in self.input_fields[1:]:
 
                 if isinstance(field, QLineEdit):
 
